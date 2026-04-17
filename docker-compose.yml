@@ -6,16 +6,20 @@ services:
       context: .
       dockerfile: prod.Dockerfile
     restart: always
-    ports:
+    expose:
       - 80
     networks:
       - dokploy-network
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.portfolio-app.rule=Host(`portfolio-app.dokploy.com`)
-      - traefik.http.routers.portfolio-app.entrypoints=websecure
-      - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
-      - traefik.http.services.portfolio-app.loadbalancer.server.port=80
+    # --- Custom domain (Cloudflare) için aktif edilecek ---
+    # Kendi domainini aldıktan sonra, Dokploy Domain UI yerine
+    # bu label'ları kullanmak istersen yorumdan çıkar ve Host'u
+    # kendi domaininle değiştir.
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.portfolio-app.rule=Host(`your-domain.com`)
+    #   - traefik.http.routers.portfolio-app.entrypoints=websecure
+    #   - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
+    #   - traefik.http.services.portfolio-app.loadbalancer.server.port=80
   # Add more containers below (nginx, postgres, etc.)
 
 # Define a network, which allows containers to communicate
