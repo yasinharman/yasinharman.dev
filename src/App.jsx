@@ -4,13 +4,13 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ChatInterface } from './components/ChatInterface';
 
-const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_HERE';
+const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
 export default function App() {
   const [messages, setMessages] = useState([]);
   const [isChatActive, setIsChatActive] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  
+
   const chatSectionRef = useRef(null);
 
   const handleSendMessage = async (messageText) => {
@@ -21,7 +21,7 @@ export default function App() {
     if (!isChatActive) setIsChatActive(true);
 
     try {
-      if (WEBHOOK_URL === 'YOUR_N8N_WEBHOOK_HERE') throw new Error('Using placeholder');
+      if (!WEBHOOK_URL) throw new Error('VITE_N8N_WEBHOOK_URL is not defined');
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,17 +57,17 @@ export default function App() {
       >
         <UnicornScene projectId="UtvhDctN8AjL6tvf1yKd" className="w-full h-full" />
       </div>
-      
+
       <Header />
-      
+
       <main className="flex-1 flex flex-col">
         <Hero onSearchSubmit={handleSendMessage} />
         {isChatActive && (
           <div ref={chatSectionRef} className="w-full">
-            <ChatInterface 
-              messages={messages} 
-              isTyping={isTyping} 
-              onSendMessage={handleSendMessage} 
+            <ChatInterface
+              messages={messages}
+              isTyping={isTyping}
+              onSendMessage={handleSendMessage}
             />
           </div>
         )}

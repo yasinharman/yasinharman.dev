@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: prod.Dockerfile
+      args:
+        VITE_N8N_WEBHOOK_URL: ${VITE_N8N_WEBHOOK_URL}
     restart: always
     expose:
       - 80
