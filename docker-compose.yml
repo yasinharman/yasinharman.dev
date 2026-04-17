@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  portfolio-app:
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+    restart: always
+    ports:
+      - 80
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portfolio-app.rule=Host(`portfolio-app.dokploy.com`)
+      - traefik.http.routers.portfolio-app.entrypoints=websecure
+      - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
+      - traefik.http.services.portfolio-app.loadbalancer.server.port=80
+  # Add more containers below (nginx, postgres, etc.)
+
+# Define a network, which allows containers to communicate
+# with each other, by using their container name as a hostname
+networks:
+  dokploy-network:
+    external: true
