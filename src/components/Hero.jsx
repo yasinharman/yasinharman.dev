@@ -4,6 +4,7 @@ import { useTypewriter } from '../hooks/useTypewriter';
 const PLACEHOLDER_QUESTIONS = [
   "Yasin'in temel yetenekleri nelerdir?",
   "Bana Yasin'in projelerinden bahset...",
+  "Yasin'in iletişim bilgileri neler?",
   "Yasin'in kullanabildiği teknolojiler neler?",
   "Hangi sosyal etkinliklere katıldı?",
   "Geçmişini özetleyebilir misin?"
