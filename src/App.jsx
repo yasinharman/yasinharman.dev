@@ -27,16 +27,25 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: messageText }),
       });
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'ai', content: data.response || data.text }]);
+      if (!response.ok) throw new Error(`Webhook HTTP ${response.status}`);
+
+      const raw = await response.text();
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch { parsed = raw; }
+
+      const node = Array.isArray(parsed) ? parsed[0] : parsed;
+      const aiText =
+        typeof node === 'string'
+          ? node
+          : node?.response ?? node?.output ?? node?.text ?? node?.message ?? node?.reply ?? node?.answer ?? JSON.stringify(node);
+
+      setMessages(prev => [...prev, { role: 'ai', content: aiText }]);
     } catch (error) {
-      setTimeout(() => {
-        setMessages(prev => [...prev, { role: 'ai', content: `Simulated response to: "${messageText}"` }]);
-        setIsTyping(false);
-      }, 1500);
-      return;
+      console.error('[chat] webhook error:', error);
+      setMessages(prev => [...prev, { role: 'ai', content: `Hata: ${error.message}` }]);
+    } finally {
+      setIsTyping(false);
     }
-    setIsTyping(false);
   };
 
   useEffect(() => {
