@@ -4,10 +4,10 @@ import { useTypewriter } from '../hooks/useTypewriter';
 const PLACEHOLDER_QUESTIONS = [
   "Yasin '...' rolünde görev alabilir mi?",
   "Yasin'in iletişim bilgileri neler?",
+  "Yasin'in projelerinden bahsetebilir misin?",
   "Yasin'in kullanabildiği teknolojiler neler?",
   "Yasin hangi sosyal etkinliklere katıldı?",
-  "Yasin'in geçmişini özetleyebilir misin?"
-];
+  ]
 
 export function Hero({ onSearchSubmit }) {
   const [inputValue, setInputValue] = useState('');
