@@ -16,12 +16,12 @@ services:
     # Kendi domainini aldıktan sonra, Dokploy Domain UI yerine
     # bu label'ları kullanmak istersen yorumdan çıkar ve Host'u
     # kendi domaininle değiştir.
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.portfolio-app.rule=Host(`portfolio.yasinharman.dev`)
-      - traefik.http.routers.portfolio-app.entrypoints=websecure
-      - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
-      - traefik.http.services.portfolio-app.loadbalancer.server.port=80
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.portfolio-app.rule=Host(`portfolio.yasinharman.dev`)
+    #   - traefik.http.routers.portfolio-app.entrypoints=websecure
+    #   - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
+    #   - traefik.http.services.portfolio-app.loadbalancer.server.port=80
   # Add more containers below (nginx, postgres, etc.)
 
 # Define a network, which allows containers to communicate
