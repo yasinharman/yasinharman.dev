@@ -34,10 +34,15 @@ export default function App() {
       try { parsed = JSON.parse(raw); } catch { parsed = raw; }
 
       const node = Array.isArray(parsed) ? parsed[0] : parsed;
-      const aiText =
+      const rawAiText =
         typeof node === 'string'
           ? node
           : node?.response ?? node?.output ?? node?.text ?? node?.message ?? node?.reply ?? node?.answer ?? JSON.stringify(node);
+
+      const aiText = String(rawAiText)
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t');
 
       setMessages(prev => [...prev, { role: 'ai', content: aiText }]);
     } catch (error) {

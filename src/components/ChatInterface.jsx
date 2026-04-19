@@ -44,10 +44,10 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
               key={idx} 
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
             >
-              <div 
-                className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm border border-zinc-700/50' 
+              <div
+                className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+                  msg.role === 'user'
+                    ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm border border-zinc-700/50'
                     : 'bg-orange-500/15 text-orange-50 border border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.08)] rounded-tl-sm'
                 }`}
               >
