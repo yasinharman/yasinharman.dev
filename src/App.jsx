@@ -1,8 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
-import UnicornScene from 'unicornstudio-react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ChatInterface } from './components/ChatInterface';
+import { useIsLowPowerDevice } from './hooks/useIsLowPowerDevice';
+
+const UnicornScene = lazy(() => import('unicornstudio-react'));
+
+function StaticAuraBackground() {
+  return (
+    <div
+      className="absolute inset-0 w-full h-full"
+      style={{
+        background:
+          'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(249,115,22,0.18) 0%, rgba(180,60,10,0.10) 35%, rgba(10,8,15,0) 70%), radial-gradient(ellipse 60% 50% at 70% 60%, rgba(120,40,200,0.10) 0%, rgba(10,8,15,0) 70%), #0a080f',
+      }}
+    />
+  );
+}
 
 const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
@@ -10,6 +24,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [isChatActive, setIsChatActive] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const isLowPower = useIsLowPowerDevice();
 
   const chatSectionRef = useRef(null);
 
@@ -69,7 +84,13 @@ export default function App() {
           WebkitMaskImage: "linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)",
         }}
       >
-        <UnicornScene projectId="UtvhDctN8AjL6tvf1yKd" className="w-full h-full" />
+        {isLowPower ? (
+          <StaticAuraBackground />
+        ) : (
+          <Suspense fallback={<StaticAuraBackground />}>
+            <UnicornScene projectId="UtvhDctN8AjL6tvf1yKd" className="w-full h-full" />
+          </Suspense>
+        )}
       </div>
 
       <Header />

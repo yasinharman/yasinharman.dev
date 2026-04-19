@@ -23,7 +23,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-4 py-24 relative">
-      <div className="w-full max-w-4xl h-[80vh] flex flex-col bg-zinc-900/40 backdrop-blur-md border border-zinc-800/60 rounded-3xl overflow-hidden shadow-2xl relative z-10">
+      <div className="w-full max-w-4xl h-[80vh] flex flex-col bg-zinc-900/70 md:bg-zinc-900/40 md:backdrop-blur-md border border-zinc-800/60 rounded-3xl overflow-hidden shadow-2xl relative z-10">
         
         {/* Chat Header */}
         <div className="px-6 py-4 border-b border-orange-500/20 bg-zinc-900/50 flex items-center gap-4">
@@ -70,7 +70,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-zinc-900/80 border-t border-orange-500/20 backdrop-blur-sm">
+        <div className="p-4 bg-zinc-900/80 border-t border-orange-500/20 md:backdrop-blur-sm">
           <form 
             onSubmit={handleSubmit}
             className="relative flex items-center bg-zinc-950/50 border border-zinc-800 rounded-2xl focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/50 transition-all"
