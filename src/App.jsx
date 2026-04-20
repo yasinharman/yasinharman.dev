@@ -83,7 +83,7 @@ export default function App() {
           <StaticAuraBackground />
         ) : (
           <Suspense fallback={<StaticAuraBackground />}>
-            <UnicornScene projectId="UtvhDctN8AjL6tvf1yKd" className="w-full h-full" />
+            <UnicornScene projectId="UtvhDctN8AjL6tvf1yKd" className="w-full h-full" fps={30} scale={0.75} dpi={1} />
           </Suspense>
         )}
         {/* brightness-50 replacement: simple GPU compositing instead of CSS filter */}
