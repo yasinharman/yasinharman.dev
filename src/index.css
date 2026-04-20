@@ -14,7 +14,7 @@
   }
   
   .glass-panel {
-    @apply bg-zinc-900/70 md:bg-zinc-900/50 md:backdrop-blur-md border border-zinc-800/50;
+    @apply bg-zinc-900/75 border border-zinc-800/50;
   }
 
   /* Custom scrollbar for chat */

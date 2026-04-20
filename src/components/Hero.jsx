@@ -24,7 +24,7 @@ export function Hero({ onSearchSubmit }) {
     <section className="min-h-screen flex flex-col animate-fade-in pt-20 pr-4 pl-4 relative items-center justify-center">
 
       {/* Ambient Glow Background - Increased Orange Intensity */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/20 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/20 blur-[120px] rounded-full pointer-events-none [will-change:transform]" />
 
       <div className="relative z-10 w-full max-w-3xl flex flex-col items-center text-center">
 
