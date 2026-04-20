@@ -29,7 +29,7 @@ export default function App() {
   const chatSectionRef = useRef(null);
 
   const handleSendMessage = async (messageText) => {
-    const newUserMsg = { role: 'user', content: messageText };
+    const newUserMsg = { id: `${Date.now()}-user`, role: 'user', content: messageText };
     setMessages(prev => [...prev, newUserMsg]);
     setIsTyping(true);
 
@@ -59,10 +59,10 @@ export default function App() {
         .replace(/\\n/g, '\n')
         .replace(/\\t/g, '\t');
 
-      setMessages(prev => [...prev, { role: 'ai', content: aiText }]);
+      setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: aiText }]);
     } catch (error) {
       console.error('[chat] webhook error:', error);
-      setMessages(prev => [...prev, { role: 'ai', content: `Hata: ${error.message}` }]);
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: `Hata: ${error.message}` }]);
     } finally {
       setIsTyping(false);
     }
@@ -70,7 +70,8 @@ export default function App() {
 
   useEffect(() => {
     if (isChatActive && chatSectionRef.current) {
-      setTimeout(() => chatSectionRef.current.scrollIntoView({ behavior: 'smooth' }), 100);
+      const timer = setTimeout(() => chatSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      return () => clearTimeout(timer);
     }
   }, [isChatActive]);
 
@@ -78,7 +79,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
       {/* Aura Background Layers */}
       <div
-        className="aura-background-component fixed top-0 w-full h-screen -z-10 hue-rotate-180 invert-0 brightness-50"
+        className="aura-background-component fixed top-0 w-full h-screen -z-10 hue-rotate-180 brightness-50 [will-change:filter]"
         style={{
           maskImage: "linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)",
           WebkitMaskImage: "linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)",

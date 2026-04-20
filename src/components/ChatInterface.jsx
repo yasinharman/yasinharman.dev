@@ -39,9 +39,9 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto chat-scroll p-6 space-y-6">
-          {messages.map((msg, idx) => (
-            <div 
-              key={idx} 
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
             >
               <div
