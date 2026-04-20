@@ -9,7 +9,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           unicorn: ['unicornstudio-react'],
-          react: ['react', 'react-dom', 'react-router-dom'],
+          react: ['react', 'react-dom'],
         },
       },
     },
