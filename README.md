@@ -63,7 +63,7 @@ VITE_N8N_WEBHOOK_URL=https://<n8n-adresiniz>/webhook/<id>
 
 ## n8n Workflow
 
-![n8n Workflow](docs/n8n-workflow.png)
+![n8n Workflow](docs/n8n%20workflow.png)
 
 Workflow iki paralel akıştan oluşur:
 
