@@ -1,6 +1,6 @@
 [yasinharman.dev](https://yasinharman.dev)
 
-# Yasin AI Portfolio — Jarvis
+# Yasin AI Portfolio — Kişisel Asistan
 
 Yasin Harman'ın kişisel portfolyo sitesinin **AI destekli** bir landing page şablonudur. Ziyaretçiler, klasik "hakkımda / projelerim" sayfalarında gezinmek yerine doğrudan **Jarvis** adında bir yapay zekâ asistanına soru sorarak Yasin hakkında bilgi alır.
 
@@ -61,7 +61,24 @@ VITE_N8N_WEBHOOK_URL=https://<n8n-adresiniz>/webhook/<id>
 | `npm run preview` | Build çıktısını yerelde önizler       |
 | `npm run lint`    | ESLint ile kod kalitesini kontrol eder|
 
-## n8n Webhook Sözleşmesi
+## n8n Workflow
+
+![n8n Workflow](docs/n8n-workflow.png)
+
+Workflow iki paralel akıştan oluşur:
+
+**1. Sohbet akışı (gerçek zamanlı)**
+`Webhook → AI Agent → Respond to Webhook`
+AI Agent şu bileşenlerle beslenir:
+- **OpenAI Chat Model** — yanıt üretimi
+- **Supabase Vector Store** — tool olarak bağlanır; Yasin hakkındaki bilgileri semantic search ile getirir
+- **Reranker Cohere** — vector store sonuçlarını alaka düzeyine göre yeniden sıralar
+
+**2. İçerik besleme akışı (manuel tetikli)**
+`Execute → Google Drive (Download file) → Default Data Loader → Recursive Character Text Splitter → Embeddings OpenAI → Supabase Vector Store`
+Yasin hakkındaki kaynak dokümanlar Google Drive'dan indirilir, parçalara ayrılır, OpenAI embedding'leri ile vektörleştirilir ve Supabase'e yazılır.
+
+### Webhook Sözleşmesi
 
 İstek (frontend → n8n):
 
