@@ -1,6 +1,18 @@
 import { useState } from 'react';
 
 /**
+ * Proje görselleri docs/ klasöründen alınır.
+ * Yeni bir görsel eklemek için: docs/ klasörüne dosyayı koy ve aşağıdaki
+ * import yollarındaki dosya adını kendi adınla değiştir.
+ */
+// ⬇️ DÜZENLE: 1. proje görseli — docs/ içindeki dosya adını yaz
+import project1Image from '../../docs/ETL.png';
+// ⬇️ DÜZENLE: 2. proje görseli — docs/ içindeki dosya adını yaz
+import project2Image from '../../docs/business.png';
+// ⬇️ DÜZENLE: 3. proje görseli — docs/ içindeki dosya adını yaz
+import project3Image from '../../docs/n8n-workflow.png';
+
+/**
  * Projeler verisi.
  * Yeni bir proje eklemek için bu diziye yeni bir obje ekleyin.
  */
@@ -8,38 +20,41 @@ const PROJECTS_DATA = [
   {
     id: 1,
     // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Quantum Interface Engine',
-    category: 'Web Application',
-    // ⬇️ DÜZENLE: Proje kutusunda görünecek fotoğrafın URL'si
-    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80',
+    title: 'Automated Scraper Bot',
+    category: 'ETL System',
+    image: project1Image,
+    // ⬇️ DÜZENLE: Projenin GitHub repository linki
+    github: 'https://github.com/yasinharman/Multiwebsite-ETL-Project',
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
-    link: 'https://example.com',
-    description: 'A highly responsive web application built with modern web technologies, focusing on delivering next-generation user interfaces for complex data ecosystems.',
-    techStack: ['React', 'Tailwind CSS', 'Vite', 'Framer Motion']
+    link: 'http://multiwebsiteetlproject-dashboard-e6buaj-70c690-77-42-34-4.traefik.me/',
+    description: '5 farklı kariyer sitesinden girilen anahtar kelime ile eşleşen iş ilanlarını bulan otomatik bir ETL yapısı ve sonuçları görselleştiren web tabanlı bir dashboard.',
+    techStack: ['Python', 'SQL', 'PostgreSQL', 'Streamlit', 'Scrapy', 'Playwright', 'Docker', 'Dokploy']
   },
   {
     id: 2,
     // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Neural Dashboard System',
-    category: 'Data Visualization',
-    // ⬇️ DÜZENLE: Proje kutusunda görünecek fotoğrafın URL'si
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+    title: 'Business Data Finder',
+    category: 'Data Extraction',
+    image: project2Image,
+    // ⬇️ DÜZENLE: Projenin GitHub repository linki
+    github: 'https://github.com/yasinharman/business-data-finder',
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
-    link: 'https://example.com',
-    description: 'An analytics dashboard that processes and visualizes large-scale neural network data in real-time, featuring interactive charts and customizable widgets.',
-    techStack: ['Next.js', 'Recharts', 'TypeScript', 'Node.js']
+    link: 'https://businessdatafinder.yasinharman.dev/',
+    description: 'İstediğiniz bir bölgedeki istediğiniz bir işletme türünün verilerini kolayca bulmanızı sağlayan bir web uygulaması.',
+    techStack: ['Python', 'n8n', 'OpenAI API', 'SerpAPI', 'Docker', 'Dokploy']
   },
   {
     id: 3,
     // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Crypto Void Protocol',
-    category: 'Blockchain',
-    // ⬇️ DÜZENLE: Proje kutusunda görünecek fotoğrafın URL'si
-    image: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?w=800&q=80',
+    title: 'Kişisel RAG Agent',
+    category: 'AI Agent',
+    image: project3Image,
+    // ⬇️ DÜZENLE: Projenin GitHub repository linki
+    github: 'https://github.com/yasinharman/yasinharman.dev',
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
-    link: 'https://example.com',
-    description: 'A decentralized finance protocol interface ensuring secure transactions. Includes wallet integrations and real-time smart contract monitoring.',
-    techStack: ['Web3.js', 'React', 'Ethers', 'Solidity']
+    link: 'https://yasinharman.dev/',
+    description: 'İşe alım uzmanlarının benim hakkımda öğrenmek istediklerini hızlı bir şekilde öğrenebilmesi adına benim hakkımdaki soruları cevaplamak üzere eğittiğim yapay zeka ajanı.',
+    techStack: ['React', 'Vite', 'RAG', 'OpenAI API', 'n8n', 'Supabase', 'Docker', 'Dokploy']
   }
 ];
 
@@ -119,9 +134,8 @@ export function ProjectsPage() {
                     </button>
 
                     <div
-                      className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] w-full ${
-                        isExpanded ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'
-                      }`}
+                      className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] w-full ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'
+                        }`}
                     >
                       <div className="overflow-hidden">
                         <div className="border-t border-white/5 pt-4">
@@ -142,6 +156,22 @@ export function ProjectsPage() {
                               ))}
                             </div>
                           </div>
+
+                          {project.github && (
+                            <a
+                              href={project.github}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group/gh mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-zinc-300 hover:border-orange-500/40 hover:text-orange-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.15)] transition-all duration-300"
+                            >
+                              <iconify-icon icon="mdi:github" class="text-lg"></iconify-icon>
+                              <span className="text-xs font-medium tracking-wide">GitHub'da Görüntüle</span>
+                              <iconify-icon
+                                icon="solar:arrow-right-up-linear"
+                                class="text-sm transition-transform duration-300 group-hover/gh:translate-x-0.5 group-hover/gh:-translate-y-0.5"
+                              ></iconify-icon>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
