@@ -34,7 +34,7 @@ const PROJECTS_DATA = [
     id: 2,
     // ⬇️ DÜZENLE: Proje başlığı
     title: 'Business Data Finder',
-    category: 'Data Extraction',
+    category: 'Data Extractıon',
     image: project2Image,
     // ⬇️ DÜZENLE: Projenin GitHub repository linki
     github: 'https://github.com/yasinharman/business-data-finder',
