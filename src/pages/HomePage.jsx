@@ -1,0 +1,75 @@
+import { useState, useRef, useEffect } from 'react';
+import { Hero } from '../components/Hero';
+import { ChatInterface } from '../components/ChatInterface';
+
+const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
+
+export function HomePage() {
+  const [messages, setMessages] = useState([]);
+  const [isChatActive, setIsChatActive] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const chatSectionRef = useRef(null);
+
+  const handleSendMessage = async (messageText) => {
+    const newUserMsg = { id: `${Date.now()}-user`, role: 'user', content: messageText };
+    setMessages(prev => [...prev, newUserMsg]);
+    setIsTyping(true);
+
+    if (!isChatActive) setIsChatActive(true);
+
+    try {
+      if (!WEBHOOK_URL) throw new Error('VITE_N8N_WEBHOOK_URL is not defined');
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageText }),
+      });
+      if (!response.ok) throw new Error(`Webhook HTTP ${response.status}`);
+
+      const raw = await response.text();
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch { parsed = raw; }
+
+      const node = Array.isArray(parsed) ? parsed[0] : parsed;
+      const rawAiText =
+        typeof node === 'string'
+          ? node
+          : node?.response ?? node?.output ?? node?.text ?? node?.message ?? node?.reply ?? node?.answer ?? JSON.stringify(node);
+
+      const aiText = String(rawAiText)
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t');
+
+      setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: aiText }]);
+    } catch (error) {
+      console.error('[chat] webhook error:', error);
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: `Hata: ${error.message}` }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isChatActive && chatSectionRef.current) {
+      const timer = setTimeout(() => chatSectionRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isChatActive]);
+
+  return (
+    <main className="flex-1 flex flex-col">
+      <Hero onSearchSubmit={handleSendMessage} />
+      {isChatActive && (
+        <div ref={chatSectionRef} className="w-full">
+          <ChatInterface
+            messages={messages}
+            isTyping={isTyping}
+            onSendMessage={handleSendMessage}
+          />
+        </div>
+      )}
+    </main>
+  );
+}
