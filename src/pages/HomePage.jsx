@@ -4,12 +4,24 @@ import { ChatInterface } from '../components/ChatInterface';
 
 const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
+function getOrCreateSessionId() {
+  const KEY = 'chat_session_id';
+  let id = sessionStorage.getItem(KEY);
+  if (!id) {
+    id = (crypto.randomUUID && crypto.randomUUID()) ||
+      `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 export function HomePage() {
   const [messages, setMessages] = useState([]);
   const [isChatActive, setIsChatActive] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
   const chatSectionRef = useRef(null);
+  const sessionIdRef = useRef(getOrCreateSessionId());
 
   const handleSendMessage = async (messageText) => {
     const newUserMsg = { id: `${Date.now()}-user`, role: 'user', content: messageText };
@@ -23,7 +35,7 @@ export function HomePage() {
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({ message: messageText, session_id: sessionIdRef.current }),
       });
       if (!response.ok) throw new Error(`Webhook HTTP ${response.status}`);
 
