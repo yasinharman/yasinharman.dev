@@ -1,13 +1,39 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+const NAV_ITEMS = [
+  { label: 'Anasayfa', path: '/', icon: 'mdi:home-outline' },
+  { label: 'Projelerim', path: '/projelerim', icon: 'mdi:folder-multiple-outline' },
+];
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navItems = [
-    { label: 'Anasayfa', path: '/', icon: 'mdi:home-outline' },
-    { label: 'Projelerim', path: '/projelerim', icon: 'mdi:folder-multiple-outline' },
-  ];
+  const navRef = useRef(null);
+  const itemRefs = useRef([]);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, ready: false });
+
+  const activeIndex = NAV_ITEMS.findIndex(i => i.path === location.pathname);
+
+  useLayoutEffect(() => {
+    const el = itemRefs.current[activeIndex];
+    if (!el) {
+      setIndicator(prev => ({ ...prev, ready: false }));
+      return;
+    }
+    setIndicator({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+  }, [activeIndex]);
+
+  useEffect(() => {
+    const onResize = () => {
+      const el = itemRefs.current[activeIndex];
+      if (!el) return;
+      setIndicator({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [activeIndex]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-8 py-6 flex items-center justify-between pointer-events-none">
@@ -22,17 +48,29 @@ export function Header() {
         </button>
       </div>
 
-      <nav className="pointer-events-auto flex items-center gap-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
-        {navItems.map(item => {
-          const isActive = location.pathname === item.path;
+      <nav
+        ref={navRef}
+        className="relative pointer-events-auto flex items-center gap-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+      >
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 -translate-y-1/2 h-9 rounded-full bg-orange-500/20 border border-orange-500/30 shadow-[0_0_12px_rgba(249,115,22,0.25)] transition-[left,width,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{
+            left: indicator.left,
+            width: indicator.width,
+            opacity: indicator.ready && activeIndex >= 0 ? 1 : 0,
+          }}
+        />
+
+        {NAV_ITEMS.map((item, i) => {
+          const isActive = i === activeIndex;
           return (
             <button
               key={item.path}
+              ref={el => (itemRefs.current[i] = el)}
               onClick={() => navigate(item.path)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium font-bricolage transition-all ${
-                isActive
-                  ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-[0_0_12px_rgba(249,115,22,0.25)]'
-                  : 'text-white/85 hover:bg-white/10 hover:text-white border border-transparent'
+              className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium font-bricolage transition-colors duration-300 ${
+                isActive ? 'text-orange-400' : 'text-white/85 hover:text-white'
               }`}
             >
               <iconify-icon icon={item.icon} width="18" height="18" />
