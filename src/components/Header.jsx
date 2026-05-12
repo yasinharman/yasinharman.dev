@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -17,22 +17,33 @@ export function Header() {
   const activeIndex = NAV_ITEMS.findIndex(i => i.path === location.pathname);
 
   useLayoutEffect(() => {
-    const el = itemRefs.current[activeIndex];
-    if (!el) {
-      setIndicator(prev => ({ ...prev, ready: false }));
-      return;
-    }
-    setIndicator({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
-  }, [activeIndex]);
-
-  useEffect(() => {
-    const onResize = () => {
+    const measure = () => {
       const el = itemRefs.current[activeIndex];
-      if (!el) return;
+      if (!el) {
+        setIndicator(prev => ({ ...prev, ready: false }));
+        return;
+      }
       setIndicator({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
     };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+
+    measure();
+
+    const el = itemRefs.current[activeIndex];
+    if (!el) return;
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (navRef.current) ro.observe(navRef.current);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(measure);
+    }
+
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [activeIndex]);
 
   return (
