@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
-import { SidePanel } from './components/SidePanel';
 import { HomePage } from './pages/HomePage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { useIsLowPowerDevice } from './hooks/useIsLowPowerDevice';
@@ -40,7 +39,6 @@ export default function App() {
       </div>
 
       <Header />
-      <SidePanel />
 
       <Routes>
         <Route path="/" element={<HomePage />} />
