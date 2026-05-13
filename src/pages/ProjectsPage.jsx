@@ -26,7 +26,7 @@ const PROJECTS_DATA = [
     // ⬇️ DÜZENLE: Projenin GitHub repository linki
     github: 'https://github.com/yasinharman/Multiwebsite-ETL-Project',
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
-    link: 'http://multiwebsiteetlproject-dashboard-e6buaj-70c690-77-42-34-4.traefik.me/',
+    link: 'https://dashboard.yasinharman.dev/',
     description: '5 farklı kariyer sitesinden girilen anahtar kelime ile eşleşen iş ilanlarını bulan otomatik bir ETL yapısı ve sonuçları görselleştiren web tabanlı bir dashboard.',
     techStack: ['Python', 'SQL', 'PostgreSQL', 'Streamlit', 'Scrapy', 'Playwright', 'Docker', 'Dokploy']
   },
