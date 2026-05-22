@@ -24,12 +24,6 @@ def chat_llm() -> ChatOpenAI:
 
 
 @lru_cache
-def guard_llm() -> ChatOpenAI:
-    s = get_settings()
-    return ChatOpenAI(model=s.OPENAI_GUARD_MODEL, temperature=0.0, api_key=s.OPENAI_API_KEY)
-
-
-@lru_cache
 def cohere_reranker() -> CohereRerank:
     s = get_settings()
     return CohereRerank(
