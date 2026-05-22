@@ -39,6 +39,7 @@ Proje; React + Vite tabanlı bir arayüz ile n8n üzerinde çalışan bir LLM wo
 │   │       ├── useTypewriter.js
 │   │       └── useIsLowPowerDevice.js
 │   ├── public/
+│   ├── docs/                    # Proje görselleri (ProjectsPage import'ları)
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
@@ -88,7 +89,7 @@ VITE_N8N_WEBHOOK_URL=https://api.yasinharman.dev/chat
 
 ## n8n Workflow
 
-![n8n Workflow](docs/n8n-workflow.png)
+![n8n Workflow](frontend/docs/n8n-workflow.png)
 
 Workflow iki paralel akıştan oluşur:
 
