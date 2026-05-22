@@ -26,31 +26,56 @@ Proje; React + Vite tabanlı bir arayüz ile n8n üzerinde çalışan bir LLM wo
 ## Proje Yapısı
 
 ```
-src/
-├── App.jsx                      # Üst seviye state + webhook entegrasyonu
-├── main.jsx                     # React root
-├── components/
-│   ├── Header.jsx
-│   ├── Hero.jsx                 # Başlık + AI arama kutusu
-│   └── ChatInterface.jsx        # Sohbet görünümü
-└── hooks/
-    ├── useTypewriter.js         # Placeholder yazı animasyonu
-    └── useIsLowPowerDevice.js   # Donanım algılama
+.
+├── frontend/                    # React + Vite uygulaması
+│   ├── src/
+│   │   ├── App.jsx              # Üst seviye state + webhook entegrasyonu
+│   │   ├── main.jsx             # React root
+│   │   ├── components/
+│   │   │   ├── Header.jsx
+│   │   │   ├── Hero.jsx         # Başlık + AI arama kutusu
+│   │   │   └── ChatInterface.jsx
+│   │   └── hooks/
+│   │       ├── useTypewriter.js
+│   │       └── useIsLowPowerDevice.js
+│   ├── public/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── prod.Dockerfile
+│   ├── nginx.conf
+│   └── docker-compose.yml
+└── backend/                     # FastAPI RAG servisi
+    ├── app/
+    │   ├── main.py              # FastAPI app
+    │   ├── routes/              # /chat, /admin/ingest
+    │   ├── agent.py             # LangChain agent + system prompt
+    │   ├── guards.py            # input/output guard'lar
+    │   ├── retriever.py         # Supabase RPC + Cohere rerank
+    │   ├── memory.py            # postgres'te session memory
+    │   └── ingest.py            # döküman ingestion + CLI
+    ├── migrations/001_init.sql
+    ├── Dockerfile
+    └── pyproject.toml
 ```
 
-## Kurulum
+## Kurulum (Frontend)
 
 ```bash
 git clone <repo-url>
-cd AI-Assistant-Portfolio-Landing-Page-Template
+cd AI-Assistant-Portfolio-Landing-Page-Template/frontend
 npm install
 ```
 
-Kök dizine bir `.env` dosyası ekleyin:
+`frontend/` dizinine bir `.env` dosyası ekleyin:
 
 ```
-VITE_N8N_WEBHOOK_URL=https://<n8n-adresiniz>/webhook/<id>
+VITE_N8N_WEBHOOK_URL=https://api.yasinharman.dev/chat
 ```
+
+> Not: Backend artık n8n yerine FastAPI servisinde çalışıyor (bkz. `backend/`). Env değişken adı geçmiş uyumluluk için `VITE_N8N_WEBHOOK_URL` olarak korunuyor.
 
 ## Scriptler
 
