@@ -13,7 +13,8 @@ from typing import Iterable
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .retriever import vector_store
+from .config import get_settings
+from .deps import supabase_client, embeddings
 
 
 def _read_pdf(path: Path) -> str:
@@ -73,8 +74,16 @@ async def ingest_path(target: str, source_label: str | None = None) -> int:
     if not docs:
         return 0
 
-    vs = vector_store()
-    await asyncio.to_thread(vs.add_documents, docs)
+    s = get_settings()
+    emb = embeddings()
+    sb = supabase_client()
+    texts = [d.page_content for d in docs]
+    vectors = await asyncio.to_thread(emb.embed_documents, texts)
+    rows = [
+        {"content": d.page_content, "metadata": d.metadata, "embedding": v}
+        for d, v in zip(docs, vectors)
+    ]
+    await asyncio.to_thread(lambda: sb.table(s.SUPABASE_TABLE).insert(rows).execute())
     return len(docs)
 
 

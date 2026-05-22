@@ -7,7 +7,7 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.tools import Tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from .deps import chat_llm
-from .retriever import retriever
+from .retriever import search as kb_search
 
 
 SYSTEM_PROMPT = """# ARAÇ KULLANIM KURALI (ZORUNLU - EN ÖNEMLİ)
@@ -157,13 +157,13 @@ def _format_docs(docs) -> str:
 
 
 async def _kb_search(query: str) -> str:
-    docs = await retriever().ainvoke(query)
+    docs = await kb_search(query)
     return _format_docs(docs)
 
 
 def _kb_search_sync(query: str) -> str:
-    docs = retriever().invoke(query)
-    return _format_docs(docs)
+    import asyncio
+    return asyncio.run(_kb_search(query))
 
 
 @lru_cache
