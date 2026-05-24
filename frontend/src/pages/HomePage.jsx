@@ -24,6 +24,7 @@ export function HomePage() {
   const sessionIdRef = useRef(getOrCreateSessionId());
 
   const handleSendMessage = async (messageText) => {
+    // ADIM 2: Optimistic update — kullanıcı mesajını anında listeye ekle, "yazıyor" göstergesini aç, ilk mesajsa chat panelini mount et.
     const newUserMsg = { id: `${Date.now()}-user`, role: 'user', content: messageText };
     setMessages(prev => [...prev, newUserMsg]);
     setIsTyping(true);
@@ -31,6 +32,7 @@ export function HomePage() {
     if (!isChatActive) setIsChatActive(true);
 
     try {
+      // ADIM 3: Mesajı ve oturum kimliğini JSON body olarak webhook'a POST et; HTTP hata kodlarını manuel olarak yakala.
       if (!WEBHOOK_URL) throw new Error('VITE_N8N_WEBHOOK_URL is not defined');
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',

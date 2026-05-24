@@ -11,6 +11,7 @@ async def append_message(session_id: str, role: str, content: str) -> None:
 
 
 async def get_history(session_id: str, limit: int) -> list[BaseMessage]:
+    # ADIM 5: Bu session'ın son N mesajını DB'den al (DESC + reverse: "en yeni N" kronolojik sırada) ve LangChain mesaj objelerine dönüştür.
     async with pool().acquire() as conn:
         rows = await conn.fetch(
             """

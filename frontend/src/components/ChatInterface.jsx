@@ -13,6 +13,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // ADIM 1: Form submit edildiğinde — boş değilse ve AI yazmıyorsa — mesajı parent'a iletir ve input'u temizler.
   const handleSubmit = (e) => {
     e.preventDefault();
     if (inputValue.trim() && !isTyping) {

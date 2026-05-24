@@ -17,16 +17,19 @@ async def chat(req: ChatRequest) -> ChatResponse:
     settings = get_settings()
     t0 = time.monotonic()
 
+    # ADIM 4: Input guard — mesajı agent'a/DB'ye geçirmeden önce kötü niyetli/yasaklı içerik için tara; bloklanırsa ayrı log'a yaz ve sabit cevap dön.
     in_verdict = await input_guard(req.message)
     if not in_verdict.allowed:
         latency = int((time.monotonic() - t0) * 1000)
         await log_blocked(req.session_id, req.message, in_verdict.reason or in_verdict.category, latency)
         return ChatResponse(response=BLOCKED_USER_MESSAGE, blocked=True)
 
+    # ADIM 6: History ile birlikte agent'ı çağır — agent system prompt + history + input ile LLM'i çalıştırır, gerektikçe portfolio_kb tool'unu kullanarak (max 4 iterasyon) final cevabı üretir.
     history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
     result = await agent_executor().ainvoke({"input": req.message, "history": history})
     raw_answer = result.get("output") or ""
 
+    # ADIM 7: Output guard — agent cevabını üç kurala karşı tara (system prompt sızıntısı / >3000 char / boş); gerekirse yerine sabit metin koy. reason audit log için.
     final_answer, sanitize_reason = output_guard(raw_answer)
 
     await append_message(req.session_id, "user", req.message)
