@@ -94,7 +94,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
             </button>
           </form>
           <div className="text-center mt-3">
-            <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-medium">Jarvis, bilgiyi sentezlemek için n8n kullanır</span>
+            <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-medium">Jarvis, bilgiyi sentezlemek için FastAPI + LangChain kullanır</span>
           </div>
         </div>
 

@@ -11,8 +11,8 @@ RUN npm ci
 COPY . .
 
 # Build-time env vars (Vite gömme: build sırasında inject edilir)
-ARG VITE_N8N_WEBHOOK_URL
-ENV VITE_N8N_WEBHOOK_URL=$VITE_N8N_WEBHOOK_URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
 

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Hero } from '../components/Hero';
 import { ChatInterface } from '../components/ChatInterface';
 
-const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
+const WEBHOOK_URL = import.meta.env.VITE_API_URL;
 
 function getOrCreateSessionId() {
   const KEY = 'chat_session_id';

@@ -1,6 +1,6 @@
 # Portfolio RAG Backend (FastAPI)
 
-Replaces the n8n RAG workflow that backs the chat on the portfolio site. Frontend (`VITE_N8N_WEBHOOK_URL`) calls `POST /chat` with the same `{message, session_id}` contract.
+RAG service backing the chat on the portfolio site (FastAPI + LangChain, Supabase Postgres). Frontend (`VITE_API_URL`) calls `POST /chat` with `{message, session_id}`.
 
 ## Architecture
 
@@ -45,22 +45,21 @@ curl -X POST http://localhost:8000/admin/ingest \
   -F "source=cv"
 ```
 
-## Deploy to Dokploy
+## Deploy to Coolify
 
 1. Push the `backend/` directory to your repo.
-2. Dokploy → New Application → Dockerfile build, root path `backend/`.
-3. Set env vars from `.env.example` in the Dokploy UI (point `DATABASE_URL` to your internal postgres hostname).
-4. Add it to the same internal network as the postgres service.
-5. Configure a Traefik label / domain (e.g. `api.yasinharman.com`) with HTTPS.
-6. Run the migration once on the target DB:
+2. Coolify → New Resource → Application → Public Repository (or Git provider). Build pack: Dockerfile, base directory `backend/`.
+3. Set env vars from `.env.example` in the Coolify UI. `DATABASE_URL` points to the Supabase **Session pooler** (port 5432).
+4. Add a domain (e.g. `api.yasinharman.dev`) — Coolify provisions Traefik + Let's Encrypt automatically.
+5. Apply the migration once on Supabase (SQL editor) or via Coolify terminal:
    ```
    psql "$DATABASE_URL" -f migrations/001_init.sql
    ```
-7. Smoke test: `curl https://api.yasinharman.com/healthz`.
-8. Update the frontend `.env.production`: `VITE_N8N_WEBHOOK_URL=https://api.yasinharman.com/chat`, rebuild & redeploy.
+6. Smoke test: `curl https://api.yasinharman.dev/healthz`.
+7. Update the frontend env in Coolify: `VITE_API_URL=https://api.yasinharman.dev/chat`, rebuild & redeploy.
 
 ## TODO before production
 
-- Replace the **placeholder system prompts** in `app/agent.py` (`SYSTEM_PROMPT`) and `app/guards.py` (`INPUT_GUARD_SYSTEM`, `OUTPUT_GUARD_SYSTEM`) with the exact prompts from the original n8n nodes.
-- Verify the embedding dimension of the existing Supabase `documents` table matches `OPENAI_EMBED_MODEL` (default `text-embedding-3-small` → 1536). If the n8n workflow used `text-embedding-ada-002` (also 1536), you are compatible; if `text-embedding-3-large` (3072), update the env var.
-- Confirm the Cohere rerank model id used by the n8n node matches `COHERE_RERANK_MODEL`.
+- Replace the **placeholder system prompts** in `app/agent.py` (`SYSTEM_PROMPT`) and `app/guards.py` (`INPUT_GUARD_SYSTEM`, `OUTPUT_GUARD_SYSTEM`) with the finalized prompts.
+- Verify the embedding dimension of the existing Supabase `documents` table matches `OPENAI_EMBED_MODEL` (default `text-embedding-3-small` → 1536). If the table was built with `text-embedding-3-large` (3072), update the env var.
+- Confirm `COHERE_RERANK_MODEL` matches the model used during ingestion.

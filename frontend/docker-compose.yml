@@ -1,33 +1,10 @@
-version: "3"
-
 services:
   portfolio-app:
     build:
       context: .
       dockerfile: prod.Dockerfile
       args:
-        VITE_N8N_WEBHOOK_URL: ${VITE_N8N_WEBHOOK_URL}
+        VITE_API_URL: ${VITE_API_URL}
     restart: always
     expose:
       - 80
-    networks:
-      - dokploy-network
-    # --- Custom domain (Cloudflare) için aktif edilecek ---
-    # Kendi domainini aldıktan sonra, Dokploy Domain UI yerine
-    # bu label'ları kullanmak istersen yorumdan çıkar ve Host'u
-    # kendi domaininle değiştir.
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.http.routers.portfolio-app.rule=Host(`portfolio.yasinharman.dev`)
-    #   - traefik.http.routers.portfolio-app.entrypoints=websecure
-    #   - traefik.http.routers.portfolio-app.tls.certResolver=letsencrypt
-    #   - traefik.http.services.portfolio-app.loadbalancer.server.port=80
-  # Add more containers below (nginx, postgres, etc.)
-
-# Define a network, which allows containers to communicate
-# with each other, by using their container name as a hostname
-networks:
-  dokploy-network:
-    external: true
-
-     #rebuild test

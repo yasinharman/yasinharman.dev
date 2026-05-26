@@ -4,12 +4,12 @@
 
 Yasin Harman'ın kişisel portfolyo sitesinin **AI destekli** bir landing page şablonudur. Ziyaretçiler, klasik "hakkımda / projelerim" sayfalarında gezinmek yerine doğrudan **Jarvis** adında bir yapay zekâ asistanına soru sorarak Yasin hakkında bilgi alır.
 
-Proje; React + Vite tabanlı bir arayüz ile n8n üzerinde çalışan bir LLM workflow'unu webhook üzerinden birbirine bağlar.
+Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RAG servisini HTTP üzerinden birbirine bağlar.
 
 ## Öne Çıkan Özellikler
 
 - **Konuşmaya dayalı hero section** — Kullanıcı, arama çubuğuna "Yasin hangi teknolojileri kullanıyor?" gibi sorular yazar; daktilo efektiyle değişen placeholder'lar ilham verir.
-- **Jarvis AI asistanı** — Mesajlar n8n webhook'una POST edilir, dönen yanıt (response / output / text / message alanlarından hangisi gelirse) sohbet arayüzünde render edilir.
+- **Jarvis AI asistanı** — Mesajlar FastAPI `/chat` endpoint'ine POST edilir, dönen yanıt (response / output / text / message alanlarından hangisi gelirse) sohbet arayüzünde render edilir.
 - **Canlı sohbet arayüzü** — İlk mesaj gönderildiğinde `ChatInterface` bileşeni açılır ve sayfa yumuşak biçimde oraya kayar. Satır sonları (`\n`) doğru şekilde işlenir.
 - **Animasyonlu WebGL arka plan** — `unicornstudio-react` ile oluşturulan Aura efekti `React.lazy` ile tembel yüklenir.
 - **Düşük güçlü cihaz algılama** — `useIsLowPowerDevice` hook'u zayıf donanımlarda WebGL sahnesi yerine statik bir radial-gradient arka plana düşer.
@@ -21,7 +21,7 @@ Proje; React + Vite tabanlı bir arayüz ile n8n üzerinde çalışan bir LLM wo
 - **Routing:** react-router-dom
 - **Stil:** TailwindCSS, clsx, tailwind-merge
 - **Görsel:** unicornstudio-react (WebGL), iconify-icon
-- **Backend:** n8n workflow (webhook üzerinden)
+- **Backend:** FastAPI + LangChain, Supabase Postgres (chat memory + vector store)
 
 ## Proje Yapısı
 
@@ -73,10 +73,8 @@ npm install
 `frontend/` dizinine bir `.env` dosyası ekleyin:
 
 ```
-VITE_N8N_WEBHOOK_URL=https://api.yasinharman.dev/chat
+VITE_API_URL=https://api.yasinharman.dev/chat
 ```
-
-> Not: Backend artık n8n yerine FastAPI servisinde çalışıyor (bkz. `backend/`). Env değişken adı geçmiş uyumluluk için `VITE_N8N_WEBHOOK_URL` olarak korunuyor.
 
 ## Scriptler
 
@@ -87,32 +85,29 @@ VITE_N8N_WEBHOOK_URL=https://api.yasinharman.dev/chat
 | `npm run preview` | Build çıktısını yerelde önizler       |
 | `npm run lint`    | ESLint ile kod kalitesini kontrol eder|
 
-## n8n Workflow
+## RAG Servisi (Backend)
 
-![n8n Workflow](frontend/docs/n8n-workflow.png)
+Backend FastAPI + LangChain üzerinde çalışan bir RAG servisidir (bkz. [`backend/`](backend/)). İki akış:
 
-Workflow iki paralel akıştan oluşur:
+**1. Sohbet akışı (gerçek zamanlı)** — `POST /chat`
+- **input_guard** (LLM) → kötü niyetli/alakasız sorular reddedilir
+- **memory** → Supabase Postgres `chat_messages` tablosundan session_id bazlı son N mesaj
+- **AgentExecutor** (LangChain) → `portfolio_kb` tool'u üzerinden Supabase Vector Store + Cohere Rerank ile bağlam toplar, OpenAI Chat Model ile yanıt üretir
+- **output_guard** (LLM) → yanıt politika dışı ise filtrelenir
+- **chat_logs** → allowed/blocked her istek loglanır
 
-**1. Sohbet akışı (gerçek zamanlı)**
-`Webhook → AI Agent → Respond to Webhook`
-AI Agent şu bileşenlerle beslenir:
-- **OpenAI Chat Model** — yanıt üretimi
-- **Supabase Vector Store** — tool olarak bağlanır; Yasin hakkındaki bilgileri semantic search ile getirir
-- **Reranker Cohere** — vector store sonuçlarını alaka düzeyine göre yeniden sıralar
+**2. İçerik besleme akışı (manuel)** — `POST /admin/ingest` (X-API-Key) veya CLI `python -m app.ingest <path>`
+Belgeler chunk'lanır, OpenAI embedding'leri ile vektörleştirilir ve Supabase `documents` tablosuna yazılır.
 
-**2. İçerik besleme akışı (manuel tetikli)**
-`Execute → Google Drive (Download file) → Default Data Loader → Recursive Character Text Splitter → Embeddings OpenAI → Supabase Vector Store`
-Yasin hakkındaki kaynak dokümanlar Google Drive'dan indirilir, parçalara ayrılır, OpenAI embedding'leri ile vektörleştirilir ve Supabase'e yazılır.
+### API Sözleşmesi
 
-### Webhook Sözleşmesi
-
-İstek (frontend → n8n):
+İstek (frontend → FastAPI):
 
 ```json
-{ "message": "Yasin hangi projelerde çalıştı?" }
+{ "message": "Yasin hangi projelerde çalıştı?", "session_id": "..." }
 ```
 
-Yanıt (n8n → frontend) aşağıdaki alanlardan herhangi biri olabilir: `response`, `output`, `text`, `message`, `reply`, `answer` veya doğrudan `string`. Dizi dönerse ilk eleman kullanılır.
+Yanıt aşağıdaki alanlardan herhangi biri olabilir: `response`, `output`, `text`, `message`, `reply`, `answer` veya doğrudan `string`. Dizi dönerse ilk eleman kullanılır.
 
 ## Lisans
 
