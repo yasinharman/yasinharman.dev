@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     HISTORY_LIMIT: int = 10
     RETRIEVER_K: int = 12
     RERANK_TOP_N: int = 4
+    RERANK_MIN_SCORE: float = 0.2
+    MATCH_THRESHOLD: float = 0.0
+
+    CHUNK_SIZE: int = 1000
+    CHUNK_OVERLAP: int = 150
+
+    MAX_INPUT_LENGTH: int = 1000
 
     ADMIN_API_KEY: str
 

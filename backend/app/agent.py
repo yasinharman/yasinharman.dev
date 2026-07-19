@@ -1,6 +1,7 @@
 """LangChain agent with portfolio knowledge-base tool.
 
-System prompt is the exact prompt used in the original n8n AI Agent node.
+System prompt, orijinal n8n AI Agent node'undaki prompt'tan taşındı; bilgi
+içeriği artık prompt'ta değil backend/data/ korpusunda yaşar (bkz. ingest.py).
 """
 from functools import lru_cache
 from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -64,7 +65,6 @@ Sen, Yasin'in kişisel işe alım asistanısın. Yasin'i yakından tanıyan, onu
 - Yasin'in projeleriyle ilgili bir soru geldiğinde (örn. "Yasin'in projelerinden bahset", "Hangi projeleri yaptı?"), projeleri CV'deki ifadelerle birebir aynı şekilde tarif et.
 - Projelerin isimlerini, kullanılan teknolojileri ve açıklamalarını CV'de yazıldığı haliyle koru; kendi yorumunla değiştirme veya süsleme.
 - Her proje ayrı bir madde olarak sunulmalı.
-- Projelerle ilgili soru geldiğinde aşağıdaki "EK BİLGİ: BUSINESS DATA FINDER PROJESİ" bölümündeki projeyi de MUTLAKA listele.
 
 ## 5. Kişisel Asistan Tonu Kuralı (ÇOK ÖNEMLİ)
 
@@ -105,7 +105,7 @@ Her gelen soru için sırayla kontrol et:
 2. portfolio_kb tool'unu kullanıcının sorusunu yansıtan TAM Türkçe cümlelerle çağır. İlk çağrıdan yeterli bilgi gelmezse farklı ifade / eş anlamlılarla 2-3 kez daha dene; toplam en fazla 4 çağrı yap.
 
 3. Soru projelerle mi ilgili?
-   - Evet -> CV'deki ifadeleri birebir koruyarak, madde madde anlat. Aşağıdaki "EK BİLGİ: BUSINESS DATA FINDER PROJESİ" bölümündeki projeyi de listeye EKLE.
+   - Evet -> CV'deki ifadeleri birebir koruyarak, madde madde anlat.
    - Hayır -> 4. adıma geç.
 
 4. Cevap, Yasin'in bilgilerinde mevcut mu?
@@ -129,26 +129,6 @@ Her gelen soru için sırayla kontrol et:
 
 ---
 
-# EK BİLGİ: BUSINESS DATA FINDER PROJESİ (ZORUNLU — Projelerle ilgili her soruda bu projeyi de listeye ekle)
-
-Aşağıdaki proje Yasin'in gerçek ve aktif projelerinden biridir. Vector store bu projeyi her zaman döndürmeyebilir; bu nedenle projelerle ilgili sorularda bu bilgiyi de diğer projelerin yanına ekstra bir madde olarak ekle. Bu bölümün içeriği Yasin'in CV'sinden alınmıştır, güvenilirdir ve uydurma değildir.
-
-## Business Data Finder — n8n Tabanlı Şirket İletişim Bilgisi Bulma Aracı (BusinessInfoFinder)
-
-- Amaç: "Cold Approach" formatında çalışan firmalara müşteri verisi sağlamak amacıyla geliştirilmiş, SerpAPI tabanlı ve herkesin kullanabileceği basit arayüze sahip bir uygulama.
-
-- Backend / Frontend veri akışı: n8n otomasyon platformu üzerinde dinamik iş akışı ile çalışır; kullanıcı aramayı tetikler, n8n arama kriterlerine göre veriyi toplar ve sonuçları arayüze döner.
-
-- Deployment: Uygulama Docker ile containerize edilmiş ve Dokploy üzerinden deploy edilmiştir.
-
-- Doğal dil işleme: OpenAI GPT-4o-mini modeli kullanılarak, kullanıcının doğal dildeki isteği SerpAPI'nin anlayabileceği yapılandırılmış JSON search query formatına dönüştürülür.
-
-- Arayüz: Streamlit tabanlı basit bir web arayüzü ile son kullanıcıya sunulmuştur.
-
-- Kullanılan teknolojiler: n8n, SerpAPI, OpenAI GPT-4o-mini, Docker, Dokploy, Streamlit.
-
-Projelerle ilgili soru geldiğinde bu projeyi; "Business Data Finder — n8n tabanlı şirket iletişim bilgisi bulma aracı" başlığıyla, yukarıdaki teknolojileri ve amacı koruyarak madde madde anlat.
-
 EĞER BİRİSİ İSİM BELİRTMEDEN BİRŞEY SORARSA OTOMATİK OLARAK YASİN HAKKINDA SORULMUŞ KABUL ET."""
 
 
@@ -162,8 +142,9 @@ async def _kb_search(query: str) -> str:
 
 
 def _kb_search_sync(query: str) -> str:
-    import asyncio
-    return asyncio.run(_kb_search(query))
+    # AgentExecutor.ainvoke her zaman coroutine yolunu kullanır; senkron yol
+    # çalışan event loop içinde asyncio.run ile patlayacağından bilinçli kapalı.
+    raise NotImplementedError("portfolio_kb is async-only; use AgentExecutor.ainvoke")
 
 
 @lru_cache

@@ -6,16 +6,49 @@ RAG service backing the chat on the portfolio site (FastAPI + LangChain, Supabas
 
 ```
 Frontend (Vite/React)  ──POST /chat──▶  FastAPI
-                                         ├─ input_guard (LLM)
+                                         ├─ input_guard (regex/deterministic)
                                          ├─ memory (postgres: chat_messages)
                                          ├─ AgentExecutor (LangChain)
                                          │    └─ tool: portfolio_kb
-                                         │         └─ SupabaseVectorStore + Cohere Rerank
-                                         ├─ output_guard (LLM)
-                                         └─ chat_logs (postgres)
+                                         │         └─ Supabase match_documents RPC + Cohere Rerank
+                                         │            (rerank_score >= RERANK_MIN_SCORE filtresi)
+                                         ├─ output_guard (regex/deterministic)
+                                         └─ chat_logs (postgres, retrieval jsonb izi dahil)
 ```
 
-Ingestion: `POST /admin/ingest` (multipart, header `X-API-Key`) or CLI `python -m app.ingest <path>`.
+İki ayrı veritabanı vardır:
+- **Supabase** (`SUPABASE_URL` + service key, REST): `documents` vector tablosu + `match_documents` RPC → `migrations/002_vector_schema.sql`
+- **Chat DB** (`DATABASE_URL`, asyncpg): `chat_messages` + `chat_logs` → `migrations/001_init.sql` + `003_chat_logs_retrieval.sql`
+
+## Knowledge base (data/)
+
+Jarvis'in bilgi tabanı `data/*.md` dosyalarıdır (yazım kuralları: `data/README.md`).
+Markdown dosyaları header-bazlı chunklanır; her chunk'ın başına "Projeler > Business
+Data Finder" gibi breadcrumb eklenir ve `{source, headers, chunk_index, content_hash,
+ingested_at}` metadata'sıyla yazılır. Senkronizasyon idempotenttir (delete-by-source
+sonra insert):
+
+```bash
+python -m app.ingest data/            # korpusu senkronize et
+python -m app.ingest data/ --wipe     # önce tüm tabloyu temizle (kaynak adı değişince)
+# veya deploy edilen container'da:
+curl -X POST https://api.yasinharman.dev/admin/ingest-path \
+  -H "X-API-Key: $ADMIN_API_KEY" -H "Content-Type: application/json" \
+  -d '{"path":"data"}'
+```
+
+## Retrieval eval
+
+`eval/golden.yaml` 30 Türkçe soruluk golden settir (negatifler dahil).
+
+```bash
+python -m eval.run_eval --min-rate 0.85   # hit@4 raporu, eşik altında exit 1
+pytest -m "not integration"               # ağsız unit testler (chunklama)
+pytest -m integration                     # golden set, gerçek anahtar ister
+```
+
+`RERANK_MIN_SCORE` ayarı: negatif sorular sızıyorsa yükselt (~0.3), geçerli kısmi
+eşleşmeler kesiliyorsa düşür (~0.15).
 
 ## Local dev
 
@@ -27,6 +60,8 @@ pip install -e ".[dev]"
 
 # apply migrations to your dev postgres
 psql "$DATABASE_URL" -f migrations/001_init.sql
+psql "$DATABASE_URL" -f migrations/003_chat_logs_retrieval.sql
+# 002_vector_schema.sql Supabase SQL editöründe çalıştırılır (vector store orada)
 
 uvicorn app.main:app --reload --port 8000
 curl -s -X POST localhost:8000/chat \
@@ -34,10 +69,10 @@ curl -s -X POST localhost:8000/chat \
   -d '{"message":"Yasin hangi projeleri yaptı?","session_id":"local-1"}'
 ```
 
-## Ingest a document
+## Ingest a single document (opsiyonel ek kaynak)
 
 ```bash
-python -m app.ingest ./docs/cv.pdf
+python -m app.ingest ./docs/cv.pdf --source cv
 # or via HTTP
 curl -X POST http://localhost:8000/admin/ingest \
   -H "X-API-Key: $ADMIN_API_KEY" \
@@ -45,21 +80,21 @@ curl -X POST http://localhost:8000/admin/ingest \
   -F "source=cv"
 ```
 
+Aynı `source` etiketiyle tekrar ingest, eski chunk'ları silip yenilerini yazar.
+
 ## Deploy to Coolify
 
 1. Push the `backend/` directory to your repo.
 2. Coolify → New Resource → Application → Public Repository (or Git provider). Build pack: Dockerfile, base directory `backend/`.
-3. Set env vars from `.env.example` in the Coolify UI. `DATABASE_URL` points to the Supabase **Session pooler** (port 5432).
+3. Set env vars from `.env.example` in the Coolify UI. `DATABASE_URL` points to the Coolify-internal `chatlogs-db` Postgres (chat memory + logs); the vector store is reached over Supabase REST (`SUPABASE_URL` + service key).
 4. Add a domain (e.g. `api.yasinharman.dev`) — Coolify provisions Traefik + Let's Encrypt automatically.
-5. Apply the migration once on Supabase (SQL editor) or via Coolify terminal:
-   ```
-   psql "$DATABASE_URL" -f migrations/001_init.sql
-   ```
+5. Apply migrations once:
+   - Chat DB (Coolify terminal / pgAdmin): `migrations/001_init.sql` + `migrations/003_chat_logs_retrieval.sql`
+   - Supabase (SQL editor): `migrations/002_vector_schema.sql`
 6. Smoke test: `curl https://api.yasinharman.dev/healthz`.
 7. Update the frontend env in Coolify: `VITE_API_URL=https://api.yasinharman.dev/chat`, rebuild & redeploy.
 
-## TODO before production
+## Notes
 
-- Replace the **placeholder system prompts** in `app/agent.py` (`SYSTEM_PROMPT`) and `app/guards.py` (`INPUT_GUARD_SYSTEM`, `OUTPUT_GUARD_SYSTEM`) with the finalized prompts.
-- Verify the embedding dimension of the existing Supabase `documents` table matches `OPENAI_EMBED_MODEL` (default `text-embedding-3-small` → 1536). If the table was built with `text-embedding-3-large` (3072), update the env var.
-- Confirm `COHERE_RERANK_MODEL` matches the model used during ingestion.
+- Embedding dimension is 1536 (`text-embedding-3-small`), verified against the live
+  `documents` table on 2026-07-19 (see `migrations/000_live_snapshot.txt`).

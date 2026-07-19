@@ -16,6 +16,7 @@ RUN pip install --upgrade pip && pip install .
 
 COPY app ./app
 COPY migrations ./migrations
+COPY data ./data
 
 EXPOSE 8000
 

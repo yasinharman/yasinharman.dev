@@ -36,5 +36,5 @@ async def ingest_upload(
 
 @router.post("/ingest-path", dependencies=[Depends(_require_admin)])
 async def ingest_by_path(body: IngestPathRequest) -> dict:
-    n = await ingest_path(body.path, source_label=body.source)
+    n = await ingest_path(body.path, source_label=body.source, wipe=body.wipe)
     return {"chunks": n, "path": body.path}

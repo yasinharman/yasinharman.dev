@@ -1,0 +1,23 @@
+Canlı Supabase snapshot — 2026-07-19 (REST introspection ile alındı; SQL erişimi yoktu)
+
+documents tablosu:
+- id: bigint (örnek satır id=1 → bigserial)
+- embedding: vector(1536) — match_documents 1536-boyutlu vektörü kabul etti
+- Toplam 12 satır, tek kaynak: metadata->>'source' = 'yasin_cv_v2'
+- Eski satırların metadata'sı LangChain-JS/n8n formatında: {"loc": {"lines": ...}, "pdf": {...}, "source": ...}
+  (bu satırlar Faz 5'te --wipe ile silinecek)
+
+match_documents RPC (migration ÖNCESİ):
+- İmza: match_documents(query_embedding vector, match_count int, filter jsonb)
+- Dönen kolonlar: id, content, metadata, similarity
+- match_threshold parametresi YOK (4-arg çağrı PGRST202 ile reddedildi)
+- Tam gövde tanımı alınamadı (REST üzerinden pg_get_functiondef çağrılamıyor).
+  Rollback gerekirse standart Supabase LangChain şablonu geçerlidir:
+  https://supabase.com/docs/guides/ai/langchain — inner product/cosine şablonu.
+
+Index bilgisi: REST üzerinden okunamadı (pg_indexes erişimi yok). 002 migration'ı
+CREATE INDEX IF NOT EXISTS kullandığından mevcut index varsa dokunulmaz.
+
+Not: DATABASE_URL (chat_messages/chat_logs) Coolify'daki ayrı Postgres'i gösterir;
+vector store bu Supabase projesindedir. 002 → Supabase SQL editöründe,
+003 → chat DB'de (pgAdmin/psql) çalıştırılır.

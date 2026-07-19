@@ -1,0 +1,104 @@
+# Retrieval eval golden seti.
+# Her soru için: search() sonuçlarında expected_sources'tan biri VEYA
+# expected_substrings'ten biri geçiyorsa hit sayılır.
+# negative: true → beklenti eşik üstü HİÇ sonuç dönmemesi.
+
+# --- Projeler ---
+- id: proje-liste
+  question: "Yasin'in projelerinden bahseder misin?"
+  expected_sources: [projeler.md]
+- id: proje-liste-kisa
+  question: "projeler"
+  expected_sources: [projeler.md]
+- id: proje-bdf
+  question: "Business Data Finder projesi nedir?"
+  expected_substrings: ["SerpAPI", "n8n"]
+- id: proje-bdf-teknoloji
+  question: "Business Data Finder hangi teknolojilerle geliştirildi?"
+  expected_substrings: ["SerpAPI", "Dokploy"]
+- id: proje-asistan
+  question: "Bu yapay zeka asistanı nasıl çalışıyor?"
+  expected_substrings: ["RAG", "FastAPI"]
+- id: proje-asistan-rag
+  question: "Yasin RAG mimarisi ile ne yaptı?"
+  expected_sources: [projeler.md]
+- id: proje-etl
+  question: "İş ilanı ETL projesi hakkında bilgi verir misin?"
+  expected_substrings: ["Scrapy", "APScheduler"]
+- id: proje-etl-parafraz
+  question: "Yasin veri çekme ve dashboard ile ilgili ne yaptı?"
+  expected_substrings: ["Streamlit", "Scrapy"]
+
+# --- Yetenekler ---
+- id: yetenek-diller
+  question: "Yasin hangi programlama dillerini biliyor?"
+  expected_substrings: ["Python", "SQL"]
+- id: yetenek-teknolojiler
+  question: "Yasin hangi teknolojileri kullanıyor?"
+  expected_sources: [yetenekler.md]
+- id: yetenek-scraping
+  question: "Yasin web scraping yapabiliyor mu?"
+  expected_substrings: ["Scrapy", "Playwright"]
+- id: yetenek-docker
+  question: "Yasin'in Docker ve deployment tecrübesi var mı?"
+  expected_sources: [yetenekler.md, projeler.md, deneyim.md]
+- id: yetenek-ogrenilen
+  question: "Yasin şu anda hangi teknolojileri öğreniyor?"
+  expected_substrings: ["Hugging Face", "SEO"]
+- id: yetenek-uzmanlik
+  question: "Yasin'in uzmanlık alanı nedir?"
+  expected_substrings: ["AI", "otomasyon"]
+
+# --- Deneyim ---
+- id: deneyim-megagear
+  question: "Yasin MegaGear'da ne yaptı?"
+  expected_sources: [deneyim.md]
+- id: deneyim-megagear-detay
+  question: "Yasin'in e-ticaret veri altyapısı deneyimi var mı?"
+  expected_substrings: ["Etsy", "Shopify"]
+- id: deneyim-scoring
+  question: "Customer Scoring Engine nedir?"
+  expected_substrings: ["segment", "Python"]
+- id: deneyim-upwork
+  question: "Yasin freelance çalışıyor mu?"
+  expected_substrings: ["Upwork", "Scale AI"]
+- id: deneyim-scaleai
+  question: "Yasin'in LLM eğitimi ile ilgili deneyimi var mı?"
+  expected_substrings: ["Outlier", "Scale AI"]
+- id: deneyim-gdg
+  question: "Yasin hangi topluluklarda yer alıyor?"
+  expected_substrings: ["GDG", "Google Developers"]
+
+# --- Hakkımda ---
+- id: hakkimda-yas
+  question: "Yasin kaç yaşında?"
+  expected_substrings: ["21"]
+- id: hakkimda-egitim
+  question: "Yasin hangi üniversitede okuyor?"
+  expected_substrings: ["Haliç"]
+- id: hakkimda-ortalama
+  question: "Yasin'in not ortalaması kaç?"
+  expected_substrings: ["3.03"]
+- id: hakkimda-ingilizce
+  question: "Yasin'in İngilizce seviyesi nasıl?"
+  expected_substrings: ["Profesyonel", "İngilizce"]
+- id: hakkimda-iletisim
+  question: "Yasin ile nasıl iletişime geçebilirim?"
+  expected_substrings: ["contact@yasinharman.dev"]
+- id: hakkimda-hobi
+  question: "Yasin'in hobileri neler?"
+  expected_substrings: ["powerlifting"]
+- id: hakkimda-konum
+  question: "Yasin nerede yaşıyor?"
+  expected_substrings: ["İstanbul"]
+
+# --- Negatifler: eşik üstü sonuç dönmemeli ---
+- id: neg-maas
+  question: "Yasin'in maaş beklentisi nedir?"
+  negative: true
+- id: neg-hava
+  question: "Bugün İstanbul'da hava nasıl?"
+  negative: true
+- id: neg-tarif
+  question: "Bana bir kek tarifi verir misin?"
+  negative: true

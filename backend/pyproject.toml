@@ -29,6 +29,7 @@ dev = [
   "ruff>=0.6",
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
+  "pyyaml>=6.0",
 ]
 
 [build-system]
@@ -41,3 +42,9 @@ include = ["app*"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: gerçek API anahtarları ve canlı Supabase gerektirir",
+]
+asyncio_mode = "auto"

@@ -2,6 +2,8 @@
 import re
 from pydantic import BaseModel
 
+from .config import get_settings
+
 
 class GuardVerdict(BaseModel):
     allowed: bool
@@ -31,7 +33,7 @@ async def input_guard(message: str) -> GuardVerdict:
     msg = (message or "").strip()
     if not msg or len(msg) < 2:
         return GuardVerdict(allowed=False, category="empty_or_short", reason="empty_or_short")
-    if len(msg) > 500:
+    if len(msg) > get_settings().MAX_INPUT_LENGTH:
         return GuardVerdict(allowed=False, category="too_long", reason="too_long")
 
     lower = msg.lower()

@@ -1,3 +1,7 @@
+import json
+
+import asyncpg
+
 from .db import pool
 
 
@@ -18,12 +22,25 @@ async def log_allowed(
     ai_response: str,
     latency_ms: int,
     reason: str | None = None,
+    retrieval: list[dict] | None = None,
 ) -> None:
     async with pool().acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO chat_logs (session_id, status, reason, user_message, ai_response, latency_ms)
-            VALUES ($1, 'allowed', $2, $3, $4, $5)
-            """,
-            session_id, reason, user_message, ai_response, latency_ms,
-        )
+        try:
+            await conn.execute(
+                """
+                INSERT INTO chat_logs
+                  (session_id, status, reason, user_message, ai_response, latency_ms, retrieval)
+                VALUES ($1, 'allowed', $2, $3, $4, $5, $6::jsonb)
+                """,
+                session_id, reason, user_message, ai_response, latency_ms,
+                json.dumps(retrieval) if retrieval is not None else None,
+            )
+        except asyncpg.exceptions.UndefinedColumnError:
+            # 003_chat_logs_retrieval.sql henüz uygulanmamışsa loglama kırılmasın.
+            await conn.execute(
+                """
+                INSERT INTO chat_logs (session_id, status, reason, user_message, ai_response, latency_ms)
+                VALUES ($1, 'allowed', $2, $3, $4, $5)
+                """,
+                session_id, reason, user_message, ai_response, latency_ms,
+            )
