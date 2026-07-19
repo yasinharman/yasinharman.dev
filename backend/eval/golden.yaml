@@ -27,6 +27,7 @@
   expected_substrings: ["Scrapy", "APScheduler"]
 - id: proje-etl-parafraz
   question: "Yasin veri çekme ve dashboard ile ilgili ne yaptı?"
+  expected_sources: [projeler.md, deneyim.md]
   expected_substrings: ["Streamlit", "Scrapy"]
 
 # --- Yetenekler ---
@@ -38,7 +39,8 @@
   expected_sources: [yetenekler.md]
 - id: yetenek-scraping
   question: "Yasin web scraping yapabiliyor mu?"
-  expected_substrings: ["Scrapy", "Playwright"]
+  expected_sources: [yetenekler.md]
+  expected_substrings: ["Scrapy", "Playwright", "web scraping"]
 - id: yetenek-docker
   question: "Yasin'in Docker ve deployment tecrübesi var mı?"
   expected_sources: [yetenekler.md, projeler.md, deneyim.md]
