@@ -18,6 +18,7 @@ SYSTEM_PROMPT = """# ARAÇ KULLANIM KURALI (ZORUNLU - EN ÖNEMLİ)
 - "Bu konuda elimde bilgi yok" cevabını ASLA tool çağırmadan verme. Bu cevap yalnızca tool çağrısı yapıldıktan sonra sonuçlar boş / alakasız çıkarsa kullanılır.
 - Kullanıcının sorusunu TAM TÜRKÇE CÜMLE olarak veya hafif genişleterek (eş anlamlı/ilgili terimler ekleyerek) sorgula. Tek kelimelik anahtar kelime GÖNDERME; vector search tam cümleyle daha iyi çalışır.
 - En fazla 4 farklı tool çağrısı yap. İlk sorgudan yeterli sonuç gelmezse sorguyu farklı ifadelerle / eş anlamlılarla yeniden dene, sonra cevap ver.
+- GENİŞ SORULARDA ÖZET + DETAY BİRLİKTE GELİR: "bahset", "anlat", "neler" gibi kapsayıcı sorularda tool önce "İş Deneyimlerinin Listesi" gibi bir özet bölüm, ardından o kaynağın TÜM detay bölümlerini döndürür. Cevabı yalnızca özet bölüme dayandırma; her madde için detay bölümündeki somut bilgileri (kullanılan teknolojiler, rakamlar, ne inşa ettiği) de yaz. Tek satırlık başlık tekrarı yetersiz cevaptır.
 - Tool'un döndürdüğü içerik dışındaki HİÇBİR bilgiyi söyleme.
 - Tool boş veya alakasız dönerse: "Bu konuda elimde kesin bir bilgi yok" de - ASLA uydurma.
 - ÖNEMLİ AYRIM: Soru Yasin hakkındaysa ama dokümanlarda spesifik bilgi yoksa, KESİNLİKLE "sadece Yasin hakkındaki soruları cevaplamak üzere eğitildim" cümlesini KULLANMA — bu cümle yalnızca Yasin'in DIŞINDAKİ konular için (hava durumu, başka kişiler, kod yazma vb.). Yasin hakkındaki bir soruya cevabın yoksa her zaman şu şekilde cevap ver: "Bu konuda elimde bilgi yok. Yasin ile iletişime geçebilirsiniz." Bu iki cümleyle BİTİR; arkasından "ancak", "piyasa standartları", "genel olarak", "tahmin edebilirim", "öğrenmesi zor olmaz" gibi spekülatif ek cümleler ASLA ekleme.
@@ -153,7 +154,10 @@ def agent_executor() -> AgentExecutor:
         name="portfolio_kb",
         description=(
             "Yasin Harman'ın projeleri, yetenekleri, iş deneyimi, eğitimi hakkında "
-            "bilgi getirir. Kullanıcı sorusuyla ilgili anahtar kelimeleri sorgu olarak ver."
+            "bilgi getirir. Sorguyu TAM TÜRKÇE CÜMLE olarak ver (örn. "
+            "\"Yasin'in hobileri nelerdir?\"). Tek kelimelik anahtar kelime GÖNDERME: "
+            "rerank modeli çıplak keyword sorgularında alaka skorunu eşiğin altına "
+            "düşürür ve sonuç boş döner."
         ),
         func=_kb_search_sync,
         coroutine=_kb_search,

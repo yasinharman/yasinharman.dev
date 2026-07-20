@@ -1,32 +1,43 @@
 # İş Deneyimi
 
+## İş Deneyimlerinin Listesi
+
+Yasin Harman'ın iş tecrübeleri, çalıştığı yerler ve görevleri şunlardır:
+
+- MegaGear — Software Engineer (Tam Zamanlı, Mayıs 2026 – Temmuz 2026). E-ticaret
+  veri altyapısı, Customer/Product Scoring Engine ve Meta reklam senkronizasyon
+  botu üzerinde çalıştı.
+- Upwork — Scale AI (Freelance, Mayıs 2025 – Günümüz). Outlier platformunda LLM
+  eğitimi ve yanıt değerlendirme projeleri.
+- Google Developers Group (GDG) On Campus — Proje Takımı Üyesi (Ekim 2025 –
+  Günümüz). Ka-Boom web uygulamasının veri ve altyapı ekibi.
+
 ## MegaGear — Software Engineer (Tam Zamanlı, Mayıs 2026 – Temmuz 2026)
 
 Yasin Harman, e-ticaret şirketi MegaGear'da Software Engineer olarak tam zamanlı
-çalıştı. Şirketin satış yaptığı Etsy ve Shopify platformlarındaki ham e-ticaret
-verilerini (yaklaşık 172.000 sipariş, iadeler ve ürün performans verileri) tek
-merkezde toplayan PostgreSQL veritabanını tasarladı. Platform API'lerinin sunmadığı
-verileri reverse engineering ile web scraping yaparak elde etti ve iki platformdaki
-müşteri kayıtlarını e-posta üzerinden eşleştirerek tek müşteri kimliği altında
-birleştirdi.
+çalıştı. Bu görevde üç ana iş üzerinde çalıştı: e-ticaret veri altyapısı,
+Customer/Product Scoring Engine ve Meta reklam senkronizasyon botu.
 
-## MegaGear — Customer/Product Scoring Engine
+Veri altyapısı tarafında, şirketin satış yaptığı Etsy ve Shopify platformlarındaki
+ham e-ticaret verilerini (yaklaşık 172.000 sipariş, iadeler ve ürün performans
+verileri) tek merkezde toplayan PostgreSQL veritabanını tasarladı. Platform
+API'lerinin sunmadığı verileri reverse engineering ile web scraping yaparak elde
+etti ve iki platformdaki müşteri kayıtlarını e-posta üzerinden eşleştirerek tek
+müşteri kimliği altında birleştirdi.
 
-Yasin, MegaGear'da 175.000'den fazla müşteriyi toplam harcaması, alışveriş
-sıklığı, satın alma eğilimi ve müşteriyi kaybetme riski gibi metriklere göre
-pazarlama segmentlerine (VIP, aggressive, retention, negative) ayıran
-Customer/Product Scoring Engine adlı botu Python ile geliştirdi. Aynı botun ürün
-tarafında, her ürünü kârlılık, satış dönüşüm oranı, reklam getirisi (ROAS) ve stok
-durumuna göre puanlayarak hangi ürüne ne kadar reklam bütçesi ayrılması gerektiğini
-belirleyen skorlama modülünü yazdı.
+Customer/Product Scoring Engine olarak adlandırılan botu Python ile geliştirdi. Bu
+bot 175.000'den fazla müşteriyi toplam harcaması, alışveriş sıklığı, satın alma
+eğilimi ve müşteriyi kaybetme riski gibi metriklere göre pazarlama segmentlerine
+(VIP, aggressive, retention, negative) ayırır. Aynı botun ürün tarafında, her ürünü
+kârlılık, satış dönüşüm oranı, reklam getirisi (ROAS) ve stok durumuna göre
+puanlayarak hangi ürüne ne kadar reklam bütçesi ayrılması gerektiğini belirleyen
+skorlama modülünü yazdı.
 
-## MegaGear — Meta Reklam Senkronizasyon Botu
-
-Yasin, scoring engine'in ürettiği müşteri segmentlerini Meta (Facebook/Instagram)
-reklam kampanyalarında hedef kitle ve hariç tutma listeleri (Custom Audience)
-olarak kullanılmak üzere her gece reklam platformuna otomatik yükleyen
-senkronizasyon botunu geliştirdi. Tüm sistemi Docker ile bulut sunucu üzerinde
-zamanlanmış görevler halinde 7/24 çalıştırdı.
+Meta reklam senkronizasyon botunda ise, scoring engine'in ürettiği müşteri
+segmentlerini Meta (Facebook/Instagram) reklam kampanyalarında hedef kitle ve hariç
+tutma listeleri (Custom Audience) olarak kullanılmak üzere her gece reklam
+platformuna otomatik yükleyen sistemi geliştirdi. Tüm sistemi Docker ile bulut
+sunucu üzerinde zamanlanmış görevler halinde 7/24 çalıştırdı.
 
 ## Upwork — Scale AI (Freelance, Mayıs 2025 – Günümüz)
 

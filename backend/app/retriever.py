@@ -77,6 +77,52 @@ def _rerank(query: str, docs: list[Document], top_n: int) -> list[Document]:
     return reranked
 
 
+_OVERVIEW_SUFFIX = "Listesi"
+
+
+def _is_overview(doc: Document) -> bool:
+    """Korpus konvansiyonu: '... Listesi' başlıklı bölümler yalnızca başlıkları sayar."""
+    return any(str(h).strip().endswith(_OVERVIEW_SUFFIX)
+               for h in (doc.metadata.get("headers") or []))
+
+
+@external_retry
+def _fetch_source(source: str) -> list[Document]:
+    s = get_settings()
+    resp = (supabase_client().table(s.SUPABASE_TABLE)
+            .select("content, metadata")
+            .eq("metadata->>source", source)
+            .execute())
+    docs = [Document(page_content=r.get("content") or "", metadata=r.get("metadata") or {})
+            for r in (resp.data or [])]
+    docs.sort(key=lambda d: d.metadata.get("chunk_index", 0))
+    return docs
+
+
+async def _expand_overviews(kept: list[Document]) -> list[Document]:
+    """Özet chunk'ı geçtiyse aynı kaynağın tüm bölümlerini de ekler.
+
+    Enumeration sorularında ("iş tecrübelerinden bahset") rerank yalnızca özet
+    bölümü üst sıraya taşır; detay bölümleri eşiğin altında kalır ve cevap tek
+    satırlık başlık tekrarına düşer. Modelin takip sorgusu atmasına güvenmek
+    gpt-4o-mini ile güvenilir olmadığı için genişletme burada deterministik yapılır.
+    """
+    sources = {d.metadata.get("source") for d in kept if _is_overview(d)}
+    sources.discard(None)
+    if not sources:
+        return kept
+
+    seen = {(d.metadata.get("source"), d.metadata.get("chunk_index")) for d in kept}
+    expanded = list(kept)
+    for source in sorted(sources):
+        for doc in await asyncio.to_thread(_fetch_source, source):
+            key = (doc.metadata.get("source"), doc.metadata.get("chunk_index"))
+            if key not in seen:
+                seen.add(key)
+                expanded.append(doc)
+    return expanded
+
+
 def _record_trace(query: str, reranked: list[Document], kept: list[Document]) -> None:
     trace = retrieval_trace.get()
     if trace is None:
@@ -108,5 +154,6 @@ async def search(query: str) -> list[Document]:
         # Degraded mod — rerank floor uygulanamaz, alakasız chunk sızabilir.
         structlog.get_logger().warning("rerank_failed_fallback", query=query[:80])
         reranked = kept = docs[: s.RERANK_TOP_N]
+    kept = await _expand_overviews(kept)
     _record_trace(query, reranked, kept)
     return kept
