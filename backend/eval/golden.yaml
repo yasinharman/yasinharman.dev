@@ -67,9 +67,10 @@
 - id: deneyim-scaleai
   question: "Yasin'in LLM eğitimi ile ilgili deneyimi var mı?"
   expected_substrings: ["Outlier", "Scale AI"]
-- id: deneyim-gdg
+- id: deneyim-topluluk
+  # GDG On Campus 20.07.2026'da korpustan çıkarıldı; artık topluluk verisi yok.
   question: "Yasin hangi topluluklarda yer alıyor?"
-  expected_substrings: ["GDG", "Google Developers"]
+  negative: true
 
 # --- Hakkımda ---
 - id: hakkimda-yas

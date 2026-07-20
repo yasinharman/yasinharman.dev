@@ -9,8 +9,6 @@ Yasin Harman'ın iş tecrübeleri, çalıştığı yerler ve görevleri şunlard
   botu üzerinde çalıştı.
 - Upwork — Scale AI (Freelance, Mayıs 2025 – Günümüz). Outlier platformunda LLM
   eğitimi ve yanıt değerlendirme projeleri.
-- Google Developers Group (GDG) On Campus — Proje Takımı Üyesi (Ekim 2025 –
-  Günümüz). Ka-Boom web uygulamasının veri ve altyapı ekibi.
 
 ## MegaGear — Software Engineer (Tam Zamanlı, Mayıs 2026 – Temmuz 2026)
 
@@ -46,12 +44,3 @@ büyük dil modellerinin (LLM) eğitilmesi ve yanıtlarının değerlendirilmesi
 çeşitli projelerde görev almaktadır. Upwork'te çeşitli otomasyon ve AI training
 işleri üzerinden bugüne kadar 700$ üzerinde kazanç elde etmiştir. Upwork profili:
 upwork.com/freelancers/~013fbee1828b285d61
-
-## Google Developers Group (GDG) On Campus — Proje Takımı Üyesi (Ekim 2025 – Günümüz)
-
-Yasin, üniversitesindeki Google Developers Group (GDG) On Campus topluluğunda 8
-kişilik proje takımının üyesidir. Takım tarafından geliştirilen Ka-Boom adlı web
-uygulamasının veri ve altyapı ekibinde teknik sorumluluklar üstlenmektedir. Bu
-deneyim, takım içinde çalışma kültürünü yakından deneyimlemesine ve solo proje
-geliştirmek ile takımla kod yazmanın farklarını bizzat yaşamasına katkı
-sağlamaktadır.
