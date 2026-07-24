@@ -65,3 +65,28 @@ async def test_tool_sorgulari_keyword_degil_cumle(soru):
     assert trace, "portfolio_kb hiç çağrılmadı"
     kisa = [c["query"] for c in trace if len(c["query"].split()) < 3]
     assert not kisa, f"agent tool'a kısa keyword sorgu gönderdi: {kisa}"
+
+
+@pytest.mark.parametrize("soru", ["yasin kim", "yasin kimdir", "yasini tanıt"])
+async def test_kimlik_sorusu_cevaplanir(soru):
+    """'Yasin kim/kimdir' kimlik sorusudur, kapsam-dışı DEĞİL: model bunu
+    reddedip tool'u atlıyordu (regresyon). Tool çağrılıp tanıtım verilmeli."""
+    answer, trace = await _ask(soru)
+    assert trace, f"kimlik sorusunda portfolio_kb çağrılmadı: {soru!r}"
+    assert "eğitildim" not in answer, f"kimlik sorusu yanlışlıkla reddedildi: {answer!r}"
+    assert "python" in answer, f"tanıtım içeriği gelmedi: {answer!r}"
+
+
+async def test_kariyer_disi_ozel_soru_reddedilir():
+    """Yasin hakkında ama kariyer dışı özel soru -> 'kariyeri hakkındaki' reddi."""
+    answer, _ = await _ask("Yasin'in en sevdiği yemek nedir?")
+    assert "kariyeri hakkındaki sorulara cevap vermek için eğitildim" in answer, (
+        f"kariyer-dışı özel soruya yanlış cevap: {answer!r}")
+
+
+async def test_alakasiz_soru_reddedilir():
+    """Yasin ile ilgisiz soru -> 'Yasin hakkındaki soruları' reddi (kariyer reddi DEĞİL)."""
+    answer, _ = await _ask("Bugün İstanbul'da hava nasıl?")
+    assert "yasin hakkındaki soruları cevaplamak için eğitildim" in answer, (
+        f"alakasız soruya yanlış cevap: {answer!r}")
+    assert "kariyeri" not in answer, f"alakasız soruya kariyer reddi verildi: {answer!r}"
