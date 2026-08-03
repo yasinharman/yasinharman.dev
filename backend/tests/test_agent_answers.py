@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 
 import pytest
+from langchain_core.messages import AIMessage, HumanMessage
 
 _HAS_KEYS = bool(os.getenv("OPENAI_API_KEY")) or (Path(__file__).parents[1] / ".env").exists()
 
@@ -23,14 +24,14 @@ pytestmark = [
 _NO_INFO = "bilgim yok"
 
 
-async def _ask(question: str) -> tuple[str, list[dict]]:
+async def _ask(question: str, history: list | None = None) -> tuple[str, list[dict]]:
     """Agent'ı /chat route'uyla aynı şekilde çalıştırır; (cevap, trace) döner."""
     from app.agent import agent_executor
     from app.retriever import retrieval_trace
 
     trace: list[dict] = []
     retrieval_trace.set(trace)
-    result = await agent_executor().ainvoke({"input": question, "history": []})
+    result = await agent_executor().ainvoke({"input": question, "history": history or []})
     return (result.get("output") or "").lower(), trace
 
 
@@ -90,3 +91,41 @@ async def test_alakasiz_soru_reddedilir():
     assert "yasin hakkındaki soruları cevaplamak için eğitildim" in answer, (
         f"alakasız soruya yanlış cevap: {answer!r}")
     assert "kariyeri" not in answer, f"alakasız soruya kariyer reddi verildi: {answer!r}"
+
+
+async def _turn(question: str, history: list) -> str:
+    """Ham (küçük harfe çevrilmemiş) cevabı döner — bir sonraki turn'ün
+    history'sinde AIMessage içeriği olarak kullanılmak üzere."""
+    from app.agent import agent_executor
+
+    result = await agent_executor().ainvoke({"input": question, "history": history})
+    return result.get("output") or ""
+
+
+async def test_baglam_takip_sorusu_iletisim_bilgisi_verir():
+    """Regresyon: 'nasıl geçicem?' gibi eksik bir takip sorusu, önceki asistan
+    cevabıyla ('Yasin ile iletişime geçebilirsiniz') birleştirilip 'Yasin'in
+    iletişim bilgileri nelerdir?' olarak yorumlanmalı — kapsam-dışı (C) reddi
+    VERİLMEMELİ, iletişim bilgisi VERİLMELİ."""
+    ilk_soru = "Yasin'in maaş beklentisi nedir?"
+    ilk_cevap = await _turn(ilk_soru, [])
+    history = [HumanMessage(content=ilk_soru), AIMessage(content=ilk_cevap)]
+
+    answer, trace = await _ask("nasıl geçicem?", history=history)
+    assert "eğitildim" not in answer, (
+        f"bağlama bağlı takip sorusu yanlışlıkla kapsam-dışı reddedildi: {answer!r}")
+    assert any(s in answer for s in ["contact@yasinharman.dev", "linkedin", "upwork", "0532"]), (
+        f"iletişim bilgisi cevaba girmedi: {answer!r}")
+
+
+async def test_baglam_konu_degisince_eski_baglami_zorlamaz():
+    """Önceki turn Yasin hakkında olsa bile, kullanıcı tamamen alakasız yeni
+    bir konuya geçerse eski bağlam ZORLA uygulanmamalı; normal Kategori C
+    reddi hâlâ verilmeli (Bağlam Çözümleme istisnasının regresyon testi)."""
+    ilk_soru = "Yasin'in projelerinden bahseder misin?"
+    ilk_cevap = await _turn(ilk_soru, [])
+    history = [HumanMessage(content=ilk_soru), AIMessage(content=ilk_cevap)]
+
+    answer, _ = await _ask("Bugün İstanbul'da hava nasıl?", history=history)
+    assert "yasin hakkındaki soruları cevaplamak için eğitildim" in answer, (
+        f"konu değiştiğinde eski bağlam sızdı / yanlış cevap: {answer!r}")
