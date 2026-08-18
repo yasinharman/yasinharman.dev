@@ -42,5 +42,5 @@ sunucu üzerinde zamanlanmış görevler halinde 7/24 çalıştırdı.
 Yasin Harman, Scale AI ile Upwork üzerinden kontratlı olarak, Outlier platformunda
 büyük dil modellerinin (LLM) eğitilmesi ve yanıtlarının değerlendirilmesine yönelik
 çeşitli projelerde görev almaktadır. Upwork'te çeşitli otomasyon ve AI training
-işleri üzerinden bugüne kadar 700$ üzerinde kazanç elde etmiştir. Upwork profili:
+işleri üzerinden bugüne kadar 1600$ üzerinde kazanç elde etmiştir. Upwork profili:
 upwork.com/freelancers/~013fbee1828b285d61

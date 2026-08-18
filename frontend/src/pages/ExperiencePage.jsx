@@ -73,12 +73,12 @@ const EXPERIENCE_DATA = [
       tr: [
         'Outlier platformunda LLM eğitimi ve yanıt değerlendirme projelerinde çalışıyor.',
         'Model çıktılarını karşılaştırıp puanlayarak eğitim verisinin kalitesine katkı sağlıyor.',
-        "Upwork'te çeşitli otomasyon ve AI training işlerinden bugüne kadar 700$ üzerinde kazanç elde etti.",
+        "Upwork'te çeşitli otomasyon ve AI training işlerinden bugüne kadar 1600$ üzerinde kazanç elde etti.",
       ],
       en: [
         'Works on LLM training and response evaluation projects on the Outlier platform.',
         'Compares and rates model outputs, contributing to the quality of the training data.',
-        'Has earned over $700 to date from various automation and AI training jobs on Upwork.',
+        'Has earned over $1,600 to date from various automation and AI training jobs on Upwork.',
       ],
     },
     techStack: ['LLM Evaluation', 'Prompt Engineering', 'Python', 'Automation'],
