@@ -18,7 +18,7 @@ Yasin Harman, Haliç Üniversitesi Bilgisayar Mühendisliği bölümünde lisans
 
 Yasin'in ana dili Türkçedir. İngilizcesi profesyonel çalışma yetkinliği
 düzeyindedir: teknik dokümantasyon okuma, uluslararası kaynaklardan faydalanma ve
-profesyonel ortamlarda İngilizce iletişim kurma konusunda yeterlidir.
+profesyonel ortamlarda İngilizce konuşma ve yazışma konusunda yeterlidir.
 
 ## Kişisel Özellikler ve Soft Skill'ler
 
@@ -37,6 +37,9 @@ ilerleme alışkanlıkları kazandırmıştır; yazılım projelerinde de aynı 
 yaklaşımı benimser.
 
 ## İletişim Bilgileri
+
+Yasin ile iletişim kurmak, Yasin'e ulaşmak veya onunla iletişime geçmek isteyenler
+aşağıdaki kanalları kullanabilir:
 
 - E-posta: contact@yasinharman.dev
 - Telefon: 0532 173 64 07
