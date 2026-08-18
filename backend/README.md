@@ -54,7 +54,7 @@ eşleşmeler kesiliyorsa düşür (~0.15).
 
 ```bash
 cd backend
-cp .env.example .env       # fill credentials
+cp .env.example .env       # fill credentials; keep MODE=local so dev never writes to the prod DB
 python -m venv .venv && . .venv/Scripts/activate   # PowerShell: .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 
@@ -86,7 +86,7 @@ Aynı `source` etiketiyle tekrar ingest, eski chunk'ları silip yenilerini yazar
 
 1. Push the `backend/` directory to your repo.
 2. Coolify → New Resource → Application → Public Repository (or Git provider). Build pack: Dockerfile, base directory `backend/`.
-3. Set env vars from `.env.example` in the Coolify UI. `DATABASE_URL` points to the Coolify-internal `chatlogs-db` Postgres (chat memory + logs); the vector store is reached over Supabase REST (`SUPABASE_URL` + service key).
+3. Set env vars from `.env.example` in the Coolify UI. **Set `MODE=prod`** — this is the switch that enables DB persistence (`chat_messages` + `chat_logs`); `MODE=local` disables all DB writes and is meant for development only. If `MODE` is left unset it defaults to `prod`, and a missing `DATABASE_URL` then stops the app at startup instead of silently dropping writes. `DATABASE_URL` points to the Coolify-internal `chatlogs-db` Postgres (chat memory + logs); the vector store is reached over Supabase REST (`SUPABASE_URL` + service key).
 4. Add a domain (e.g. `api.yasinharman.dev`) — Coolify provisions Traefik + Let's Encrypt automatically.
 5. Apply migrations once:
    - Chat DB (Coolify terminal / pgAdmin): `migrations/001_init.sql` + `migrations/003_chat_logs_retrieval.sql`

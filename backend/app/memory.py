@@ -1,8 +1,11 @@
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
-from .db import pool
+from .db import persistence_enabled, pool
 
 
 async def append_message(session_id: str, role: str, content: str) -> None:
+    # Kalıcılık kapalıyken (lokal) prod DB kirletilmesin diye sessizce atlanır.
+    if not persistence_enabled():
+        return
     async with pool().acquire() as conn:
         await conn.execute(
             "INSERT INTO chat_messages (session_id, role, content) VALUES ($1, $2, $3)",
@@ -12,6 +15,8 @@ async def append_message(session_id: str, role: str, content: str) -> None:
 
 async def get_history(session_id: str, limit: int) -> list[BaseMessage]:
     # ADIM 5: Bu session'ın son N mesajını DB'den al (DESC + reverse: "en yeni N" kronolojik sırada) ve LangChain mesaj objelerine dönüştür.
+    if not persistence_enabled():
+        return []
     async with pool().acquire() as conn:
         rows = await conn.fetch(
             """

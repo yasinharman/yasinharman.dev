@@ -1,4 +1,7 @@
 from functools import lru_cache
+from typing import Literal
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +20,13 @@ class Settings(BaseSettings):
     SUPABASE_TABLE: str = "documents"
     SUPABASE_QUERY_NAME: str = "match_documents"
 
-    DATABASE_URL: str
+    # Çalışma modu — DB kalıcılığını (chat_messages + chat_logs) belirleyen tek anahtar.
+    #   prod  : normal davranış; DATABASE_URL zorunlu, her mesaj DB'ye yazılır.
+    #   local : geliştirme; DB'ye hiçbir şey yazılmaz, prod verisi kirlenmez.
+    # Varsayılan bilinçli olarak "prod": Coolify'da MODE tanımlanmasa bile prod
+    # davranışı geçerli olur ve eksik DATABASE_URL startup'ta çöker (fail-fast).
+    MODE: Literal["local", "prod"] = "prod"
+    DATABASE_URL: str | None = None
 
     HISTORY_LIMIT: int = 10
     RETRIEVER_K: int = 12
@@ -35,6 +44,15 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:5173"
     PORT: int = 8000
     LOG_LEVEL: str = "info"
+
+    @model_validator(mode="after")
+    def _require_database_url_in_prod(self) -> "Settings":
+        if self.MODE == "prod" and not self.DATABASE_URL:
+            raise ValueError(
+                "MODE=prod iken DATABASE_URL zorunludur. "
+                "Lokal geliştirme için MODE=local verin."
+            )
+        return self
 
     @property
     def allowed_origins_list(self) -> list[str]:

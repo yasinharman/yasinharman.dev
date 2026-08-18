@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .db import init_pool, close_pool
+from .db import init_pool, close_pool, persistence_enabled
 from .routes.chat import router as chat_router
 from .routes.admin import router as admin_router
 
@@ -26,6 +26,11 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     _configure_logging(settings.LOG_LEVEL)
     await init_pool()
+    if not persistence_enabled():
+        structlog.get_logger().warning(
+            "persistence_disabled",
+            detail="MODE=local; sohbet geçmişi ve chat_logs DB'ye yazılmayacak.",
+        )
     yield
     await close_pool()
 

@@ -2,10 +2,12 @@ import json
 
 import asyncpg
 
-from .db import pool
+from .db import persistence_enabled, pool
 
 
 async def log_blocked(session_id: str, user_message: str, reason: str, latency_ms: int) -> None:
+    if not persistence_enabled():
+        return
     async with pool().acquire() as conn:
         await conn.execute(
             """
@@ -24,6 +26,8 @@ async def log_allowed(
     reason: str | None = None,
     retrieval: list[dict] | None = None,
 ) -> None:
+    if not persistence_enabled():
+        return
     async with pool().acquire() as conn:
         try:
             await conn.execute(
