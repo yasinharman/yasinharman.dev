@@ -26,6 +26,8 @@ venv/
 .idea/
 *.swp
 
-# CV: kisisel iletisim bilgisi (telefon) icerir, public repoya girmemeli.
-# Icerigi ExperiencePage.jsx'e elle aktarilir; dosyanin kendisi repoda tutulmaz.
+# CV ve is gecmisi kaynak notlari: kisisel iletisim bilgisi ve gizli proje
+# adlari icerirler, public repoya girmemeli. Icerikleri ExperiencePage.jsx'e
+# elle aktarilir; dosyalarin kendisi repoda tutulmaz.
 cv.pdf
+scaleaiproject.md

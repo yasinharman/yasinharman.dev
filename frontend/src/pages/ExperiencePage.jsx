@@ -60,21 +60,25 @@ const EXPERIENCE_DATA = [
     id: 'upwork',
     company: 'Upwork — Scale AI',
     logo: upworkLogo,
-    role: { tr: 'AI Training & Otomasyon', en: 'AI Training & Automation' },
+    role: { tr: 'AI Değerlendirme Mühendisi', en: 'AI Evaluation Engineer' },
     type: { tr: 'Freelance', en: 'Freelance' },
     period: { tr: 'Mayıs 2025 – Günümüz', en: 'May 2025 – Present' },
     link: 'https://www.upwork.com/freelancers/~013fbee1828b285d61',
     highlights: {
       tr: [
-        'Scale AI ile Upwork üzerinden kontratlı olarak, Outlier platformunda büyük dil modellerinin (LLM) eğitilmesi ve yanıtlarının değerlendirilmesine yönelik çeşitli projelerde görev alıyorum.',
+        "Outlier platformunda, Python, Go ve Rust projelerindeki açık kaynak pull request'lerden yola çıkarak, gelişmiş kodlama ajanlarını gerçek projelerdeki kod düzenleme işleri üzerinde ölçen değerlendirme görevleri hazırladım; her görevde bir problem tanımı, public API arayüz tanımı, geçti/kaldı şeklinde net kriterler ve değişen kodu kapsayan bir test paketi yer alıyor.",
+        'Görevlerin zorluğunu rastgeleye bırakmadım: örnek çözümde doğrudan kopyalanabilecek kısımlar ile koda bakıp anlaşılması gereken davranışı ayırdım ve kriterleri ikincisine bağladım. Böylece tanımı kopyalamak geçmeye yetmiyor.',
+        'Her görevi, aynı sonucu tekrar üretebilen Docker ortamlarında birkaç aşamalı bir kontrolden geçirdim: örnek çözümün tam puan alması, farklı modellerin kriterler üzerinde aynı sonuca varması ve görevin yeterince zor sayılması için gelişmiş bir ajanın zorunlu kriterlerden en az birinde takılması.',
         'Upwork platformunda çeşitli otomasyon ve AI training işleri üzerinden bugüne kadar 1600$ üzerinde kazanç elde ettim.',
       ],
       en: [
-        'Contracted with Scale AI through Upwork, working on various projects on the Outlier platform that train large language models (LLMs) and evaluate their responses.',
+        'On the Outlier platform, built end-to-end evaluation tasks from merged open-source pull requests across Python, Go and Rust that measure frontier coding agents on real-world refactors — each with a problem statement, a public-API interface specification, binary pass/fail grading criteria and a diff-coverage test suite.',
+        'Engineered task difficulty as a design decision: separated the mechanically transcribable surface of each reference patch from the behaviour that has to be inferred, then anchored the grading criteria to the latter, so copying the specification is not enough to pass.',
+        'Validated every task in reproducible Docker environments through a multi-stage pipeline: a reference-solution run that had to score perfectly, multi-model agreement on the grading criteria, and a difficulty gate requiring a frontier agent to fail at least one mandatory criterion.',
         'Have earned over $1,600 to date from various automation and AI training jobs on the Upwork platform.',
       ],
     },
-    techStack: ['LLM Evaluation', 'Prompt Engineering', 'Python', 'Automation'],
+    techStack: ['LLM Evaluation', 'AI Agent Benchmarking', 'Python', 'Go', 'Rust', 'Docker', 'Test Design'],
   },
 ];
 
