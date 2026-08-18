@@ -1,14 +1,17 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 
+// Rota yolları dile göre değişmez; yalnızca etiketler çevrilir.
 const NAV_ITEMS = [
-  { label: 'Anasayfa', path: '/', icon: 'mdi:home-outline' },
-  { label: 'Projelerim', path: '/projelerim', icon: 'mdi:folder-multiple-outline' },
+  { key: 'home', path: '/', icon: 'mdi:home-outline' },
+  { key: 'projects', path: '/projelerim', icon: 'mdi:folder-multiple-outline' },
 ];
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const navRef = useRef(null);
   const itemRefs = useRef([]);
@@ -44,7 +47,7 @@ export function Header() {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [activeIndex]);
+  }, [activeIndex, t]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-8 py-6 flex items-center justify-between pointer-events-none">
@@ -52,7 +55,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => navigate('/')}
-          aria-label="Anasayfaya dön"
+          aria-label={t.nav.backHome}
           className="text-xl tracking-tight text-white cursor-pointer group font-bricolage font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-transform duration-200 ease-out hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 rounded-md"
         >
           Yasin<span className="text-orange-500 group-hover:text-orange-400 transition-colors drop-shadow-[0_0_8px_rgba(249,115,22,0.5)] font-bricolage font-semibold">.</span>Harman
@@ -85,7 +88,7 @@ export function Header() {
               }`}
             >
               <iconify-icon icon={item.icon} width="18" height="18" />
-              <span>{item.label}</span>
+              <span>{t.nav[item.key]}</span>
             </button>
           );
         })}

@@ -1,17 +1,11 @@
 import { useState } from 'react';
 import { useTypewriter } from '../hooks/useTypewriter';
-
-const PLACEHOLDER_QUESTIONS = [
-  "Yasin '...' rolünde görev alabilir mi?",
-  "Yasin'in iletişim bilgileri neler?",
-  "Yasin'in projelerinden bahsedebilir misin?",
-  "Yasin'in kullanabildiği teknolojiler neler?",
-  "Yasin hangi sosyal etkinliklere katıldı?",
-  ]
+import { useLanguage } from '../i18n/LanguageContext';
 
 export function Hero({ onSearchSubmit }) {
   const [inputValue, setInputValue] = useState('');
-  const placeholderText = useTypewriter(PLACEHOLDER_QUESTIONS);
+  const { t } = useLanguage();
+  const placeholderText = useTypewriter(t.hero.placeholders);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,11 +23,11 @@ export function Hero({ onSearchSubmit }) {
       <div className="relative z-10 w-full max-w-3xl flex flex-col items-center text-center">
 
         <h1 className="text-5xl md:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-zinc-200 to-zinc-500 mb-6 font-bricolage font-semibold">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-400 drop-shadow-[0_0_15px_rgba(249,115,22,0.3)] font-bricolage font-semibold">Yasin</span> hakkında ne bilmek istersiniz?
+          {t.hero.titleBefore}<span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-400 drop-shadow-[0_0_15px_rgba(249,115,22,0.3)] font-bricolage font-semibold">{t.hero.titleName}</span>{t.hero.titleAfter}
         </h1>
 
         <p className="text-lg text-zinc-400 mb-12 max-w-xl font-light font-sans">
-          Merhaba, ben Jarvis! Yasin hakkındaki soruları yanıtlamak için eğitildim.
+          {t.hero.subtitle}
         </p>
 
         {/* Search / Input Box */}

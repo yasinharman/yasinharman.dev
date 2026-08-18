@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 /**
  * Proje görselleri docs/ klasöründen alınır.
@@ -19,58 +20,62 @@ import project3Image from '../../docs/n8n-workflow.png';
 const PROJECTS_DATA = [
   {
     id: 1,
-    // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Automated Scraper Bot',
-    category: 'ETL System',
+    // ⬇️ DÜZENLE: Proje başlığı (dile göre ayrı; aynıysa iki alana da aynısını yazın)
+    title: { tr: 'Automated Scraper Bot', en: 'Automated Scraper Bot' },
+    category: { tr: 'ETL System', en: 'ETL System' },
     image: project1Image,
     // ⬇️ DÜZENLE: Projenin GitHub repository linki
     github: 'https://github.com/yasinharman/Multiwebsite-ETL-Project',
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
     link: 'https://dashboard.yasinharman.dev/',
-    description: '5 farklı kariyer sitesinden girilen anahtar kelime ile eşleşen iş ilanlarını bulan otomatik bir ETL yapısı ve sonuçları görselleştiren web tabanlı bir dashboard.',
+    description: {
+      tr: '5 farklı kariyer sitesinden girilen anahtar kelime ile eşleşen iş ilanlarını bulan otomatik bir ETL yapısı ve sonuçları görselleştiren web tabanlı bir dashboard.',
+      en: 'An automated ETL pipeline that finds job postings matching a given keyword across 5 different career sites, plus a web dashboard that visualises the results.',
+    },
     techStack: ['Python', 'SQL', 'PostgreSQL', 'Streamlit', 'Scrapy', 'Playwright', 'Docker', 'Dokploy']
   },
   {
     id: 2,
-    // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Business Data Finder',
-    category: 'Data Extractıon',
+    title: { tr: 'Business Data Finder', en: 'Business Data Finder' },
+    category: { tr: 'Data Extraction', en: 'Data Extraction' },
     image: project2Image,
-    // ⬇️ DÜZENLE: Projenin GitHub repository linki
     github: 'https://github.com/yasinharman/business-data-finder',
-    // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
     link: 'https://businessdatafinder.yasinharman.dev/',
-    description: 'İstediğiniz bir bölgedeki istediğiniz bir işletme türünün verilerini kolayca bulmanızı sağlayan bir web uygulaması.',
+    description: {
+      tr: 'İstediğiniz bir bölgedeki istediğiniz bir işletme türünün verilerini kolayca bulmanızı sağlayan bir web uygulaması.',
+      en: 'A web application that lets you easily pull data for any type of business in any region you choose.',
+    },
     techStack: ['Python', 'n8n', 'OpenAI API', 'SerpAPI', 'Docker', 'Dokploy']
   },
   {
     id: 3,
-    // ⬇️ DÜZENLE: Proje başlığı
-    title: 'Kişisel RAG Agent',
-    category: 'AI Agent',
+    title: { tr: 'Kişisel RAG Agent', en: 'Personal RAG Agent' },
+    category: { tr: 'AI Agent', en: 'AI Agent' },
     image: project3Image,
-    // ⬇️ DÜZENLE: Projenin GitHub repository linki
     github: 'https://github.com/yasinharman/yasinharman.dev',
-    // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
     link: 'https://yasinharman.dev/',
-    description: 'İşe alım uzmanlarının benim hakkımda öğrenmek istediklerini hızlı bir şekilde öğrenebilmesi adına benim hakkımdaki soruları cevaplamak üzere eğittiğim yapay zeka ajanı.',
+    description: {
+      tr: 'İşe alım uzmanlarının benim hakkımda öğrenmek istediklerini hızlı bir şekilde öğrenebilmesi adına benim hakkımdaki soruları cevaplamak üzere eğittiğim yapay zeka ajanı.',
+      en: 'An AI agent I trained to answer questions about me, so recruiters can find out what they want to know about me quickly.',
+    },
     techStack: ['React', 'Vite', 'RAG', 'OpenAI API', 'n8n', 'Supabase', 'Docker', 'Dokploy']
   },
   {
     id: 4,
-    title: 'Harcules AI',
-    category: 'YAKINDA',
+    title: { tr: 'Harcules AI', en: 'Harcules AI' },
+    category: { tr: 'YAKINDA', en: 'COMING SOON' },
     image: null,
     github: null,
     link: null,
     comingSoon: true,
-    description: '',
+    description: { tr: '', en: '' },
     techStack: []
   }
 ];
 
 export function ProjectsPage() {
   const [expandedId, setExpandedId] = useState(null);
+  const { language, t } = useLanguage();
 
   const toggleExpand = (id, e) => {
     e.preventDefault();
@@ -85,7 +90,7 @@ export function ProjectsPage() {
         <div className="relative z-10 py-16 px-6 md:px-12 flex flex-col items-center">
           <h1 className="text-3xl md:text-4xl font-medium tracking-tight text-zinc-100 mb-16 flex items-center gap-6 text-center">
             <span className="w-12 h-px bg-gradient-to-r from-transparent to-white/20 hidden sm:block" />
-            PROJELERİM
+            {t.projects.heading}
             <span className="w-12 h-px bg-gradient-to-l from-transparent to-white/20 hidden sm:block" />
           </h1>
 
@@ -106,12 +111,12 @@ export function ProjectsPage() {
 
                       <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                         <span className="text-orange-500 text-xs font-semibold tracking-widest uppercase mb-3 block">
-                          {project.category}
+                          {project.category[language]}
                         </span>
 
                         <div className="flex items-end justify-between gap-4">
                           <h3 className="text-2xl font-medium tracking-tight text-white text-balance leading-snug">
-                            {project.title}
+                            {project.title[language]}
                           </h3>
 
                           <div className="w-10 h-10 rounded-full bg-zinc-800/80 flex items-center justify-center border border-white/10 shrink-0">
@@ -129,7 +134,7 @@ export function ProjectsPage() {
                     >
                       <img
                         src={project.image}
-                        alt={project.title}
+                        alt={project.title[language]}
                         className="w-full h-full object-cover transition-[opacity,transform] duration-500 opacity-70 group-hover:opacity-95 group-hover:scale-105"
                         loading="lazy"
                         decoding="async"
@@ -139,12 +144,12 @@ export function ProjectsPage() {
 
                       <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
                         <span className="text-orange-500 text-xs font-semibold tracking-widest uppercase mb-3 block">
-                          {project.category}
+                          {project.category[language]}
                         </span>
 
                         <div className="flex items-end justify-between gap-4">
                           <h3 className="text-2xl font-medium tracking-tight text-white text-balance leading-snug">
-                            {project.title}
+                            {project.title[language]}
                           </h3>
 
                           <div className="w-10 h-10 rounded-full bg-zinc-800/80 flex items-center justify-center border border-white/10 group-hover:bg-orange-500 group-hover:border-orange-400 group-hover:text-black transition-colors duration-300 shrink-0">
@@ -161,7 +166,7 @@ export function ProjectsPage() {
                       disabled={project.comingSoon}
                       className={`flex items-center justify-center gap-2 w-full py-2 text-sm transition-colors focus:outline-none ${project.comingSoon ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-orange-400'}`}
                     >
-                      <span>{project.comingSoon ? 'Detaylar Hazırlanıyor' : isExpanded ? 'Detayları Gizle' : 'Detayları Göster'}</span>
+                      <span>{project.comingSoon ? t.projects.detailsComingSoon : isExpanded ? t.projects.hideDetails : t.projects.showDetails}</span>
                       {!project.comingSoon && (
                         <iconify-icon
                           icon="solar:alt-arrow-down-linear"
@@ -177,11 +182,11 @@ export function ProjectsPage() {
                       <div className="overflow-hidden">
                         <div className="border-t border-white/5 pt-4">
                           <p className="text-zinc-300 text-sm md:text-base leading-relaxed mb-6 font-light">
-                            {project.description}
+                            {project.description[language]}
                           </p>
 
                           <div>
-                            <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Teknolojiler</h4>
+                            <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">{t.projects.technologies}</h4>
                             <div className="flex flex-wrap gap-2">
                               {project.techStack.map((tech, i) => (
                                 <span
@@ -202,7 +207,7 @@ export function ProjectsPage() {
                               className="group/gh mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-zinc-300 hover:border-orange-500/40 hover:text-orange-400 transition-colors duration-300"
                             >
                               <iconify-icon icon="mdi:github" class="text-lg"></iconify-icon>
-                              <span className="text-xs font-medium tracking-wide">GitHub'da Görüntüle</span>
+                              <span className="text-xs font-medium tracking-wide">{t.projects.viewOnGithub}</span>
                               <iconify-icon icon="solar:arrow-right-up-linear" class="text-sm"></iconify-icon>
                             </a>
                           )}

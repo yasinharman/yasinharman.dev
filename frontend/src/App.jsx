@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
+import { LanguageSwitch } from './components/LanguageSwitch';
 import { HomePage } from './pages/HomePage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { useIsLowPowerDevice } from './hooks/useIsLowPowerDevice';
@@ -44,6 +45,8 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/projelerim" element={<ProjectsPage />} />
       </Routes>
+
+      <LanguageSwitch />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Hero } from '../components/Hero';
 import { ChatInterface } from '../components/ChatInterface';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const WEBHOOK_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +20,7 @@ export function HomePage() {
   const [messages, setMessages] = useState([]);
   const [isChatActive, setIsChatActive] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const { language, t } = useLanguage();
 
   const chatSectionRef = useRef(null);
   const sessionIdRef = useRef(getOrCreateSessionId());
@@ -37,7 +39,8 @@ export function HomePage() {
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText, session_id: sessionIdRef.current }),
+        // lang -> backend cevabi bu dilde yazar; bilgi tabanı sorgusu her zaman Türkçe kalır.
+        body: JSON.stringify({ message: messageText, session_id: sessionIdRef.current, lang: language }),
       });
       if (!response.ok) throw new Error(`Webhook HTTP ${response.status}`);
 
@@ -59,7 +62,7 @@ export function HomePage() {
       setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: aiText }]);
     } catch (error) {
       console.error('[chat] webhook error:', error);
-      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: `Hata: ${error.message}` }]);
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: `${t.chat.errorPrefix}: ${error.message}` }]);
     } finally {
       setIsTyping(false);
     }

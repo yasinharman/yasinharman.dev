@@ -5,6 +5,14 @@ export function useTypewriter(phrases, { typingSpeed = 50, deletingSpeed = 30, p
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Dil değişince cümle listesi komple değişir; yarım kalmış metni sıfırla ki
+  // eski dilin harfleri yeni cümlenin başına karışmasın.
+  useEffect(() => {
+    setText('');
+    setPhraseIndex(0);
+    setIsDeleting(false);
+  }, [phrases]);
+
   useEffect(() => {
     let timer;
     const currentPhrase = phrases[phraseIndex];

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export function ChatInterface({ messages, isTyping, onSendMessage }) {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef(null);
+  const { t } = useLanguage();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,8 +35,8 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
             <iconify-icon icon="solar:cpu-bold-duotone" width="24" height="24"></iconify-icon>
           </div>
           <div>
-            <h3 className="font-medium text-zinc-100">Jarvis</h3>
-            <p className="text-xs text-zinc-400">YasinHarman için Yapay Zeka Asistanı</p>
+            <h3 className="font-medium text-zinc-100">{t.chat.assistantName}</h3>
+            <p className="text-xs text-zinc-400">{t.chat.assistantRole}</p>
           </div>
         </div>
 
@@ -80,7 +82,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Başka bir soru sorun..."
+              placeholder={t.chat.inputPlaceholder}
               className="flex-1 bg-transparent border-none outline-none py-4 pl-5 pr-14 text-zinc-100 placeholder:text-zinc-500"
               disabled={isTyping}
               autoComplete="off"
@@ -94,7 +96,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
             </button>
           </form>
           <div className="text-center mt-3">
-            <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-medium">Jarvis, bilgiyi sentezlemek için FastAPI + LangChain kullanır</span>
+            <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-medium">{t.chat.footer}</span>
           </div>
         </div>
 
