@@ -5,6 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 // Rota yolları dile göre değişmez; yalnızca etiketler çevrilir.
 const NAV_ITEMS = [
   { key: 'home', path: '/', icon: 'mdi:home-outline' },
+  { key: 'experience', path: '/deneyimlerim', icon: 'mdi:briefcase-outline' },
   { key: 'projects', path: '/projelerim', icon: 'mdi:folder-multiple-outline' },
 ];
 

@@ -20,6 +20,7 @@ export const translations = {
 
     nav: {
       home: 'Anasayfa',
+      experience: 'İş Tecrübelerim',
       projects: 'Projelerim',
       backHome: 'Anasayfaya dön',
     },
@@ -48,6 +49,12 @@ export const translations = {
       errorPrefix: 'Hata',
     },
 
+    experience: {
+      heading: 'İŞ TECRÜBELERİM',
+      technologies: 'Teknolojiler',
+      viewProfile: 'Profili Görüntüle',
+    },
+
     projects: {
       heading: 'PROJELERİM',
       technologies: 'Teknolojiler',
@@ -69,6 +76,7 @@ export const translations = {
 
     nav: {
       home: 'Home',
+      experience: 'My Experience',
       projects: 'My Projects',
       backHome: 'Back to home',
     },
@@ -93,6 +101,12 @@ export const translations = {
       inputPlaceholder: 'Ask another question...',
       footer: 'Jarvis uses FastAPI + LangChain to synthesise information',
       errorPrefix: 'Error',
+    },
+
+    experience: {
+      heading: 'MY EXPERIENCE',
+      technologies: 'Technologies',
+      viewProfile: 'View Profile',
     },
 
     projects: {
