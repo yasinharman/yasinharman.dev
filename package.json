@@ -1,0 +1,15 @@
+{
+  "name": "yasinharman-dev",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Kok orkestrasyon: frontend (Vite) + backend (FastAPI) tek komutla",
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "cd backend && ../.venv/bin/uvicorn app.main:app --reload --port 8000",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "test": "cd backend && ../.venv/bin/pytest",
+    "setup": "npm --prefix frontend install && uv venv .venv && VIRTUAL_ENV=.venv uv pip install -e './backend[dev]'"
+  }
+}
