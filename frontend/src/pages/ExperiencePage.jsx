@@ -60,7 +60,7 @@ const EXPERIENCE_DATA = [
     id: 'upwork',
     company: 'Upwork — Scale AI',
     logo: upworkLogo,
-    role: { tr: 'AI Değerlendirme Mühendisi', en: 'AI Evaluation Engineer' },
+    role: { tr: 'AI Engineer', en: 'AI Engineer' },
     type: { tr: 'Freelance', en: 'Freelance' },
     period: { tr: 'Mayıs 2025 – Günümüz', en: 'May 2025 – Present' },
     link: 'https://www.upwork.com/freelancers/~013fbee1828b285d61',
