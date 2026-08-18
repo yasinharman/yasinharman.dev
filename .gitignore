@@ -25,3 +25,7 @@ venv/
 .vscode/
 .idea/
 *.swp
+
+# CV: kisisel iletisim bilgisi (telefon) icerir, public repoya girmemeli.
+# Icerigi ExperiencePage.jsx'e elle aktarilir; dosyanin kendisi repoda tutulmaz.
+cv.pdf

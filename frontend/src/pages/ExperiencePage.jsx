@@ -20,8 +20,13 @@ import upworkLogo from '../../docs/upwork-logo.png';
 
 /**
  * İş deneyimi verisi.
- * Metinler backend/data/deneyim.md ile aynı bilgiyi anlatır; oradaki bir kayıt
- * değişirse burayı da güncelleyin, yoksa sayfa ile Jarvis'in cevabı çelişir.
+ * Maddeler Yasin'in CV'sindeki "Tecrübeler" bölümünden birebir alınmıştır ve
+ * CV'nin birinci şahıs anlatımını korur. CV güncellenirse burası da güncellenmeli.
+ * CV dosyasının kendisi repoda tutulmuyor (kişisel iletişim bilgisi içeriyor,
+ * .gitignore'da).
+ *
+ * Not: backend/data/deneyim.md aynı bilgiyi üçüncü şahısla anlatır — asistan o
+ * tonda konuştuğu için bilerek farklıdır, ikisini birbirine eşitlemeyin.
  *
  * Yeni bir deneyim eklemek için bu diziye yeni bir obje ekleyin; kartlar
  * ikişerli grid'de yukarıdan aşağı, dizideki sırayla akar.
@@ -35,24 +40,18 @@ const EXPERIENCE_DATA = [
     type: { tr: 'Tam Zamanlı', en: 'Full-time' },
     period: { tr: 'Mayıs 2026 – Temmuz 2026', en: 'May 2026 – July 2026' },
     link: null,
-    summary: {
-      tr: "E-ticaret şirketi MegaGear'da veri altyapısı, müşteri/ürün skorlama motoru ve Meta reklam senkronizasyon botu olmak üzere üç ana iş üzerinde çalıştı.",
-      en: 'Worked on three main areas at the e-commerce company MegaGear: the data infrastructure, the customer/product scoring engine and the Meta ad synchronisation bot.',
-    },
     highlights: {
       tr: [
-        "Etsy ve Shopify'daki ham e-ticaret verilerini (~172.000 sipariş, iadeler, ürün performansı) tek merkezde toplayan PostgreSQL veritabanını tasarladı.",
-        'Platform API\'lerinin sunmadığı verileri reverse engineering ile web scraping yaparak elde etti; iki platformdaki müşterileri e-posta üzerinden tek kimlikte birleştirdi.',
-        "175.000'den fazla müşteriyi harcama, sıklık, satın alma eğilimi ve kayıp riskine göre pazarlama segmentlerine ayıran Customer/Product Scoring Engine'i Python ile geliştirdi.",
-        'Ürünleri kârlılık, dönüşüm oranı, ROAS ve stok durumuna göre puanlayarak reklam bütçesi dağılımını belirleyen skorlama modülünü yazdı.',
-        'Müşteri segmentlerini her gece Meta Custom Audience listelerine yükleyen senkronizasyon botunu kurdu ve tüm sistemi Docker ile bulut sunucuda 7/24 çalıştırdı.',
+        "Şirketin satış yaptığı Etsy ve Shopify platformlarındaki ham e-ticaret verilerini (yaklaşık 172.000 sipariş, iadeler ve ürün performans verileri) tek merkezde toplayan PostgreSQL veritabanını tasarladım; platform API'lerinin sunmadığı verileri reverse engineering ile web scraping yaparak elde ettim ve iki platformdaki müşteri kayıtlarını e-posta üzerinden eşleştirerek tek müşteri kimliği altında birleştirdim.",
+        "Bu verileri kullanarak, 175.000'den fazla müşteriyi toplam harcaması, alışveriş sıklığı, satın alma eğilimi ve müşteriyi kaybetme riski gibi metriklere göre pazarlama segmentlerine (VIP, aggressive, retention, negative) ayıran Customer/Product Scoring Engine adlı botu Python kullanarak geliştirdim.",
+        'Aynı botun ürün tarafında, her ürünü kârlılık, satış dönüşüm oranı, reklam getirisi (ROAS) ve stok durumuna göre puanlayarak hangi ürüne ne kadar reklam bütçesi ayrılması gerektiğini belirleyen skorlama modülünü geliştirdim.',
+        'Botun ürettiği müşteri segmentlerini, Meta (Facebook/Instagram) reklam kampanyalarında hedef kitle ve hariç tutma listeleri (Custom Audience) olarak kullanılmak üzere her gece reklam platformuna otomatik yükleyen senkronizasyon botunu geliştirdim; tüm sistemi Docker ile bulut sunucu üzerinde zamanlanmış görevler halinde 7/24 çalıştırdım.',
       ],
       en: [
-        'Designed the PostgreSQL database that centralises raw e-commerce data from Etsy and Shopify (~172,000 orders, returns and product performance data).',
-        'Reverse engineered and scraped data the platform APIs did not expose, and merged customers across both platforms into a single identity by matching e-mail addresses.',
-        'Built the Customer/Product Scoring Engine in Python, segmenting 175,000+ customers by total spend, purchase frequency, buying propensity and churn risk.',
-        'Wrote the scoring module that ranks products by profitability, conversion rate, ROAS and stock level to decide how the ad budget is distributed.',
-        'Built the bot that uploads customer segments to Meta Custom Audience lists every night, running the whole system 24/7 as scheduled jobs in Docker on a cloud server.',
+        'Designed the PostgreSQL database that centralises the raw e-commerce data from the Etsy and Shopify platforms the company sells on (roughly 172,000 orders, returns and product performance data); obtained the data the platform APIs did not expose through reverse engineering and web scraping, and merged customer records from both platforms into a single customer identity by matching e-mail addresses.',
+        'Using that data, built a bot called the Customer/Product Scoring Engine in Python that sorts more than 175,000 customers into marketing segments (VIP, aggressive, retention, negative) by metrics such as total spend, purchase frequency, buying propensity and churn risk.',
+        'On the product side of the same bot, developed the scoring module that rates every product by profitability, sales conversion rate, return on ad spend (ROAS) and stock level, determining how much ad budget each product should receive.',
+        'Developed the synchronisation bot that uploads the customer segments the bot produces to Meta (Facebook/Instagram) every night, to be used as target audience and exclusion lists (Custom Audience) in ad campaigns; ran the whole system 24/7 as scheduled jobs on a cloud server with Docker.',
       ],
     },
     techStack: ['Python', 'PostgreSQL', 'Web Scraping', 'Meta Marketing API', 'Docker'],
@@ -65,20 +64,14 @@ const EXPERIENCE_DATA = [
     type: { tr: 'Freelance', en: 'Freelance' },
     period: { tr: 'Mayıs 2025 – Günümüz', en: 'May 2025 – Present' },
     link: 'https://www.upwork.com/freelancers/~013fbee1828b285d61',
-    summary: {
-      tr: 'Scale AI ile Upwork üzerinden kontratlı olarak, Outlier platformunda büyük dil modellerinin eğitilmesi ve yanıtlarının değerlendirilmesine yönelik projelerde görev alıyor.',
-      en: 'Contracted with Scale AI through Upwork, working on the Outlier platform on projects that train large language models and evaluate their responses.',
-    },
     highlights: {
       tr: [
-        'Outlier platformunda LLM eğitimi ve yanıt değerlendirme projelerinde çalışıyor.',
-        'Model çıktılarını karşılaştırıp puanlayarak eğitim verisinin kalitesine katkı sağlıyor.',
-        "Upwork'te çeşitli otomasyon ve AI training işlerinden bugüne kadar 1600$ üzerinde kazanç elde etti.",
+        'Scale AI ile Upwork üzerinden kontratlı olarak, Outlier platformunda büyük dil modellerinin (LLM) eğitilmesi ve yanıtlarının değerlendirilmesine yönelik çeşitli projelerde görev alıyorum.',
+        'Upwork platformunda çeşitli otomasyon ve AI training işleri üzerinden bugüne kadar 1600$ üzerinde kazanç elde ettim.',
       ],
       en: [
-        'Works on LLM training and response evaluation projects on the Outlier platform.',
-        'Compares and rates model outputs, contributing to the quality of the training data.',
-        'Has earned over $1,600 to date from various automation and AI training jobs on Upwork.',
+        'Contracted with Scale AI through Upwork, working on various projects on the Outlier platform that train large language models (LLMs) and evaluate their responses.',
+        'Have earned over $1,600 to date from various automation and AI training jobs on the Upwork platform.',
       ],
     },
     techStack: ['LLM Evaluation', 'Prompt Engineering', 'Python', 'Automation'],
@@ -144,11 +137,7 @@ export function ExperiencePage() {
 
                 <div className="flex flex-col flex-1 px-6 pb-6 md:px-8 md:pb-8 bg-zinc-950">
                   <div className="border-t border-white/5 pt-5">
-                    <p className="text-zinc-300 text-sm md:text-base leading-relaxed font-light">
-                      {exp.summary[language]}
-                    </p>
-
-                    <ul className="mt-5 space-y-3">
+                    <ul className="space-y-3">
                       {exp.highlights[language].map((item, i) => (
                         <li key={i} className="flex gap-3 text-sm text-zinc-400 leading-relaxed font-light">
                           <iconify-icon
