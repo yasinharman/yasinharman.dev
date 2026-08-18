@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from ..schemas import ChatRequest, ChatResponse
 from ..config import get_settings
 from ..memory import get_history, append_message
-from ..guards import input_guard, output_guard, BLOCKED_USER_MESSAGE
+from ..guards import input_guard, output_guard, blocked_user_message
 from ..agent import agent_executor
 from ..logging_db import log_blocked, log_allowed
 from ..retriever import retrieval_trace
@@ -23,17 +23,17 @@ async def chat(req: ChatRequest) -> ChatResponse:
     if not in_verdict.allowed:
         latency = int((time.monotonic() - t0) * 1000)
         await log_blocked(req.session_id, req.message, in_verdict.reason or in_verdict.category, latency)
-        return ChatResponse(response=BLOCKED_USER_MESSAGE, blocked=True)
+        return ChatResponse(response=blocked_user_message(req.lang), blocked=True)
 
     # ADIM 6: History ile birlikte agent'ı çağır — agent system prompt + history + input ile LLM'i çalıştırır, gerektikçe portfolio_kb tool'unu kullanarak (max 4 iterasyon) final cevabı üretir.
     history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
     trace: list[dict] = []
     retrieval_trace.set(trace)
-    result = await agent_executor().ainvoke({"input": req.message, "history": history})
+    result = await agent_executor(req.lang).ainvoke({"input": req.message, "history": history})
     raw_answer = result.get("output") or ""
 
     # ADIM 7: Output guard — agent cevabını üç kurala karşı tara (system prompt sızıntısı / >3000 char / boş); gerekirse yerine sabit metin koy. reason audit log için.
-    final_answer, sanitize_reason = output_guard(raw_answer)
+    final_answer, sanitize_reason = output_guard(raw_answer, req.lang)
 
     await append_message(req.session_id, "user", req.message)
     await append_message(req.session_id, "assistant", final_answer)
@@ -44,6 +44,6 @@ async def chat(req: ChatRequest) -> ChatResponse:
         reason=sanitize_reason, retrieval=trace or None,
     )
 
-    log.info("chat", session_id=req.session_id, latency_ms=latency,
+    log.info("chat", session_id=req.session_id, lang=req.lang, latency_ms=latency,
              sanitize=sanitize_reason, kb_calls=len(trace))
     return ChatResponse(response=final_answer, blocked=False)

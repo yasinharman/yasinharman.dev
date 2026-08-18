@@ -24,14 +24,14 @@ pytestmark = [
 _NO_INFO = "bilgim yok"
 
 
-async def _ask(question: str, history: list | None = None) -> tuple[str, list[dict]]:
+async def _ask(question: str, history: list | None = None, lang: str = "tr") -> tuple[str, list[dict]]:
     """Agent'ı /chat route'uyla aynı şekilde çalıştırır; (cevap, trace) döner."""
     from app.agent import agent_executor
     from app.retriever import retrieval_trace
 
     trace: list[dict] = []
     retrieval_trace.set(trace)
-    result = await agent_executor().ainvoke({"input": question, "history": history or []})
+    result = await agent_executor(lang).ainvoke({"input": question, "history": history or []})
     return (result.get("output") or "").lower(), trace
 
 
@@ -93,12 +93,12 @@ async def test_alakasiz_soru_reddedilir():
     assert "kariyeri" not in answer, f"alakasız soruya kariyer reddi verildi: {answer!r}"
 
 
-async def _turn(question: str, history: list) -> str:
+async def _turn(question: str, history: list, lang: str = "tr") -> str:
     """Ham (küçük harfe çevrilmemiş) cevabı döner — bir sonraki turn'ün
     history'sinde AIMessage içeriği olarak kullanılmak üzere."""
     from app.agent import agent_executor
 
-    result = await agent_executor().ainvoke({"input": question, "history": history})
+    result = await agent_executor(lang).ainvoke({"input": question, "history": history})
     return result.get("output") or ""
 
 
@@ -129,3 +129,83 @@ async def test_baglam_konu_degisince_eski_baglami_zorlamaz():
     answer, _ = await _ask("Bugün İstanbul'da hava nasıl?", history=history)
     assert "yasin hakkındaki soruları cevaplamak için eğitildim" in answer, (
         f"konu değiştiğinde eski bağlam sızdı / yanlış cevap: {answer!r}")
+
+
+@pytest.mark.parametrize("soru", [
+    "Yasin kaç yaşında?",
+    "Yasin kaç yaşında",
+    "Yasin'in yaşı kaç?",
+    "Yasin nerede yaşıyor?",
+])
+async def test_biyografik_soru_reddedilmez(soru):
+    """Regresyon: yaş/yaşadığı şehir korpusta VAR ve A kategorisidir. Model bunları
+    'özel hayat' sanıp tool'u hiç çağırmadan B reddi veriyordu. Aynı soru İngilizcede
+    doğru cevaplanıyordu — hata Türkçe sınıflandırmadaydı."""
+    answer, trace = await _ask(soru)
+    assert trace, f"biyografik soruda portfolio_kb çağrılmadı: {soru!r}"
+    assert "eğitildim" not in answer, f"biyografik soru yanlışlıkla reddedildi: {answer!r}"
+    assert "bilgi yok" not in answer, f"korpusta olan bilgiye 'bilgi yok' dendi: {answer!r}"
+
+
+async def test_ingilizce_mod_ingilizce_cevap_verir_ama_turkce_sorgular():
+    """EN modunda cevap İngilizce olmalı; bilgi tabanı Türkçe olduğu ve rerank eşiği
+    Türkçe sorgulara göre kalibre edildiği için tool sorgusu TÜRKÇE kalmalı."""
+    answer, trace = await _ask("How old is Yasin?", lang="en")
+    assert trace, "EN modunda portfolio_kb çağrılmadı"
+    assert "21" in answer, f"yaş bilgisi cevaba girmedi: {answer!r}"
+    turkce_harf = set("çğıöşüÇĞİÖŞÜ")
+    turkce_sorgu = [c["query"] for c in trace if turkce_harf & set(c["query"])]
+    assert turkce_sorgu, f"tool'a Türkçe sorgu gitmedi: {[c['query'] for c in trace]}"
+
+
+@pytest.mark.parametrize("soru,beklenen", [
+    ("What is Yasin's favourite food?", "about yasin's career"),
+    ("What's the weather in Istanbul today?", "questions about yasin."),
+])
+async def test_ingilizce_reddetme_cumleleri(soru, beklenen):
+    """İki reddetme kategorisi EN modunda da birbirine karışmadan çalışmalı."""
+    answer, _ = await _ask(soru, lang="en")
+    assert beklenen in answer, f"EN reddetme cümlesi yanlış: {answer!r}"
+
+
+async def _iki_tur(t1: str, t1_lang: str, t2: str, t2_lang: str) -> tuple[str, list[dict]]:
+    """İki turluk sohbet: ilk turun cevabı history'ye yazılır, ikinci tur onunla sorulur."""
+    ilk = await _turn(t1, [], t1_lang)
+    history = [HumanMessage(content=t1), AIMessage(content=ilk)]
+    return await _ask(t2, history=history, lang=t2_lang)
+
+
+async def test_hobi_takip_sorusu_reddedilmez():
+    """Regresyon: "Bu spor ona ne kazandırmış?" takip sorusu B reddi alıyordu.
+    Hobiler ve hobilerin kazandırdıkları A kategorisi; cevap korpusta var."""
+    answer, _ = await _iki_tur("Yasin'in hobileri neler?", "tr",
+                               "Bu spor ona ne kazandırmış?", "tr")
+    # Yeni bir portfolio_kb çağrısı ŞART DEĞİL: powerlifting detayları ilk turun
+    # cevabıyla zaten bağlamda. Önemli olan reddetmemesi ve içeriği vermesi.
+    assert "eğitildim" not in answer, f"hobi takip sorusu reddedildi: {answer!r}"
+    assert any(k in answer for k in ("disiplin", "hedef", "sistematik")), (
+        f"powerlifting'in kazandırdıkları cevaba girmedi: {answer!r}")
+
+
+async def test_dil_degisiminde_cevap_ingilizce_olur():
+    """Regresyon: konuşma geçmişi Türkçeyken İngilizce tura geçilince cevap Türkçe
+    geliyor ya da soru B'ye kayıyordu. Dil hatırlatması artık geçmişin hemen
+    ardında, kullanıcı mesajının önünde ayrı bir mesaj olarak veriliyor."""
+    answer, trace = await _iki_tur("Yasin kaç yaşında?", "tr",
+                                   "And where does he live?", "en")
+    assert trace, "dil değişimi turunda portfolio_kb çağrılmadı"
+    assert "only trained" not in answer, f"dil değişiminde soru reddedildi: {answer!r}"
+    assert "istanbul" in answer, f"şehir bilgisi gelmedi: {answer!r}"
+    turkce_iz = [w for w in ("yaşıyor", "yaşında", "yaşamaktadır") if w in answer]
+    assert not turkce_iz, f"EN turunda Türkçe cevap sızdı: {turkce_iz} -> {answer!r}"
+
+
+@pytest.mark.parametrize("takip", ["how can I do that?", "how do I reach him?", "how?"])
+async def test_ingilizce_eliptik_iletisim_sorusu(takip):
+    """Regresyon: EN'de "iletişim kurmak" diye sorgulanınca retriever hakkimda.md'nin
+    Diller bölümünü getiriyordu ("profesyonel ortamlarda İngilizce iletişim kurma");
+    cevap iletişim bilgisi yerine dil becerisi anlatıyordu."""
+    answer, trace = await _iki_tur("What are Yasin's salary expectations?", "en", takip, "en")
+    assert trace, f"{takip!r} sorusunda portfolio_kb çağrılmadı"
+    assert any(k in answer for k in ("contact@yasinharman.dev", "0532", "linkedin")), (
+        f"iletişim bilgisi cevaba girmedi: {answer!r}")

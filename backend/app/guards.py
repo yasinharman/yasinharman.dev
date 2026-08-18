@@ -46,35 +46,77 @@ async def input_guard(message: str) -> GuardVerdict:
     return GuardVerdict(allowed=True, category="ok")
 
 
+# Sistem promptunun kullanıcıya sızdığını gösteren işaretler.
+#
+# DİKKAT: Buraya çıplak "portfolio_kb" KOYMAYIN. Tool'un adı bilgi tabanında da
+# geçiyor (data/projeler.md, RAG projesinin mimarisi anlatılırken), dolayısıyla
+# "projelerinden bahset" gibi tamamen meşru bir soruya verilen doğru cevap
+# sızıntı sanılıp siliniyordu. Sinyaller, prompt'a özgü TALİMAT ifadeleri
+# olmalı — bir proje açıklamasında geçmesi mümkün olmayan cümle parçaları.
 LEAK_SIGNALS = [
+    # Bölüm başlıkları
     "ARAÇ KULLANIM KURALI", "ROL VE AMAÇ", "TEMEL KURALLAR",
-    "Supabase Vector Store1", "portfolio_kb", "KARAR AKIŞI", "YASAKLAR",
+    "KARAR AKIŞI", "YASAKLAR", "CEVAP FORMATI", "BAĞLAM ÇÖZÜMLEME",
+    "Kapsam Kuralı", "Dürüstlük Kuralı", "Proje Anlatım Kuralı",
+    "Pozisyon Uygunluğu Kuralı", "Kişisel Asistan Tonu",
+    "Supabase Vector Store1",
     "system prompt", "system message",
-    "Kapsam Kuralı", "Dürüstlük Kuralı",
+    # Kategori bolumleri: baslik veya govdesi tek basina sizarsa da yakalansin
+    "### A)", "### B)", "### C)",
+    "Tool'u ÇAĞIRMA", "Bu kategoriye giren tipik sorular", "KAPALI bir listedir",
+    # Tool'a dair TALİMAT cümleleri (yalın tool adı bilerek yok)
+    # "tool'unu çağır" tirnakli/tirnaksiz her iki prompt yazimini da yakalar;
+    # korpus ayni tool'dan "tool'unu kullanir" diye bahsettigi icin catismaz.
+    "tool'unu çağır", "portfolio_kb çağrılarak",
+    "portfolio_kb tool'unu kullanıcının", "call portfolio_kb with",
+    # İngilizce dil direktifi bloğu
+    "ANSWER LANGUAGE", "OUTPUT LANGUAGE: ENGLISH", "REMINDER BEFORE YOU ANSWER", "Scope rule B", "Scope rule C",
 ]
 
-OUTPUT_LEAK_REPLACEMENT = "Üzgünüm, bu soruyu cevaplayamıyorum."
-OUTPUT_EMPTY_REPLACEMENT = "Üzgünüm, şu an cevap üretemiyorum. Lütfen tekrar deneyin."
+_OUTPUT_LEAK_REPLACEMENT = {
+    "tr": "Üzgünüm, bu soruyu cevaplayamıyorum.",
+    "en": "Sorry, I can't answer that question.",
+}
+_OUTPUT_EMPTY_REPLACEMENT = {
+    "tr": "Üzgünüm, şu an cevap üretemiyorum. Lütfen tekrar deneyin.",
+    "en": "Sorry, I can't produce an answer right now. Please try again.",
+}
 OUTPUT_MAX_LEN = 3000
 
+# Geriye donuk uyumluluk: dil parametresi verilmeyen cagrilar Turkce alir.
+OUTPUT_LEAK_REPLACEMENT = _OUTPUT_LEAK_REPLACEMENT["tr"]
+OUTPUT_EMPTY_REPLACEMENT = _OUTPUT_EMPTY_REPLACEMENT["tr"]
 
-def output_guard(answer: str) -> tuple[str, str | None]:
+
+def output_guard(answer: str, lang: str = "tr") -> tuple[str, str | None]:
     """Return (sanitized_text, reason_if_modified)."""
     text = answer or ""
 
     if any(s in text for s in LEAK_SIGNALS):
-        return OUTPUT_LEAK_REPLACEMENT, "leak"
+        return _OUTPUT_LEAK_REPLACEMENT.get(lang, OUTPUT_LEAK_REPLACEMENT), "leak"
 
     if len(text) > OUTPUT_MAX_LEN:
         return text[:OUTPUT_MAX_LEN] + "...", "truncated"
 
     if not text.strip():
-        return OUTPUT_EMPTY_REPLACEMENT, "empty"
+        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT), "empty"
 
     return text, None
 
 
-BLOCKED_USER_MESSAGE = (
-    "Üzgünüm, bu konuda yardımcı olamam. Yasin'in projeleri, deneyimi veya yetenekleri "
-    "hakkında bir şey sormak ister misin?"
-)
+_BLOCKED_USER_MESSAGE = {
+    "tr": (
+        "Üzgünüm, bu konuda yardımcı olamam. Yasin'in projeleri, deneyimi veya yetenekleri "
+        "hakkında bir şey sormak ister misin?"
+    ),
+    "en": (
+        "Sorry, I can't help with that. Would you like to ask about Yasin's projects, "
+        "experience or skills?"
+    ),
+}
+
+BLOCKED_USER_MESSAGE = _BLOCKED_USER_MESSAGE["tr"]
+
+
+def blocked_user_message(lang: str = "tr") -> str:
+    return _BLOCKED_USER_MESSAGE.get(lang, BLOCKED_USER_MESSAGE)
