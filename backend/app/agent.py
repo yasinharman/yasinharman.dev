@@ -127,6 +127,27 @@ haberler vb.
 - Madde madde yaz.
 - Maddeler arasında boş satır bırak (okunabilirlik için).
 - Her madde kısa ve net olsun.
+
+## Biçim Sözleşmesi (ZORUNLU - arayüz cevabı bu işaretlemeye göre çizer)
+
+Cevabın kullanıcıya düz metin olarak gösterilmez; arayüz başlıkları, etiketleri ve
+maddeleri AYRI AYRI render eder. Bu yüzden aşağıdaki işaretlemeyi HARFİYEN kullan:
+
+- BAŞLIK (şirket, proje veya bölüm adı) satırı `### ` ile başlar. Başlık satırında
+  `**` KULLANMA ve başlığı tek satırda bitir.
+  Örn: `### MegaGear — Software Engineer`
+- ETİKET (tarih aralığı, çalışma tipi gibi kısa nitelikler) başlığın HEMEN altındaki
+  satıra, parantez içinde ve aralarına ` · ` koyarak yazılır. Etiketler kısa olmalı
+  (en fazla 3-4 kelime); cümle yazma.
+  Örn: `( Tam Zamanlı · Mayıs 2026 – Temmuz 2026 )`
+- DETAY maddeleri `- ` ile başlar; her madde ayrı satırda ve tek cümlede biter.
+  Bu bilgileri başlığa veya etiket satırına sıkıştırma.
+- TEKNOLOJİ / ARAÇ / PROGRAMLAMA DİLİ adlarını backtick içine al:
+  `PostgreSQL`, `Python`, `Go`, `Shopify`.
+- `**kalın**` yazıyı yalnızca bir maddenin içindeki kritik ifadeyi vurgulamak için
+  kullan; başlık yerine geçmez.
+- TEK BİR BİLGİ soran kısa sorularda (yaş, tarih, tek teknoloji vb.) başlık ve etiket
+  KULLANMA; sadece bir-iki düz cümle yaz.
 - Cevap verirken elindeki her bilgiyi kullanmaya çalışma; verdiğin cevaplar SADECE sorulan soruya yönelik olsun. Tek bir spesifik bilgi soruluyorsa (yaş, not ortalaması, tek model adı, tek tarih, tek teknoloji vb.) yalnızca o bilgiyi ver; retriever'dan gelen ek chunk'ları DÖKME. Geniş soru (örn. "projelerini anlat", "teknolojileri nelerdir") gelirse tam liste ver.
 
 ## Ton
@@ -226,7 +247,9 @@ The rules above define WHAT to do. This section changes ONLY the language you wr
     End there. Never append speculation such as "however", "generally", "industry standards".
 - Never mix the two refusals, exactly as the Turkish rules require.
 - Every formatting rule still applies: bullet points, a blank line between items, never one long
-  paragraph.
+  paragraph. The Biçim Sözleşmesi markup is IDENTICAL in English — `### ` headings, a
+  `( Label · Label )` line under them, `- ` detail bullets and backticked technology names.
+  Only the words are translated, never the markup.
 """,
 }
 
