@@ -5,7 +5,7 @@
 Yasin Harman'ın geliştirdiği üç ana proje şunlardır:
 
 - Kişisel Yapay Zeka Asistanı (yasinharman.dev) — RAG Agent (Jarvis)
-- Uçtan Uca Otomatize İş İlanı ETL ve Dashboard Sistemi
+- Internship Tracker — Uçtan Uca Otomatize İş İlanı ETL ve Dashboard Sistemi
 - Business Data Finder (BusinessInfoFinder) — n8n Tabanlı Şirket İletişim Bilgisi
   Bulma Aracı
 
@@ -25,10 +25,13 @@ doğal dil ile erişebilmesidir. Teknik bileşenler:
 - Deployment: Docker ile containerize edildi, Coolify üzerinden canlıya alındı.
 - Kaynak kod: github.com/yasinharman/PortfolioWebsite
 
-## Uçtan Uca Otomatize İş İlanı ETL ve Dashboard Sistemi
+## Internship Tracker — Uçtan Uca Otomatize İş İlanı ETL ve Dashboard Sistemi
 
-5 farklı kariyer platformundan anahtar kelime tabanlı veri toplayıp analiz eden,
-tamamen otomatize çalışan bir sistemdir. Teknik bileşenler:
+Projenin adı Internship Tracker'dır; dashboard'a bu adla erişilir
+(dashboard.yasinharman.dev). Başlıca kariyer platformlarından part-time iş ve
+staj ilanlarını belirli aralıklarla otomatik olarak çeken, tamamen otomatize
+çalışan bir ETL sistemidir. Toplanan ilanlar kaynağa, tipe ve alana göre
+filtrelenebilen bir dashboard üzerinden takip edilir. Teknik bileşenler:
 
 - Python ve Scrapy ile ölçeklenebilir bir veri çekme (web scraping) katmanı.
 - Çekilen verilerin ön işleme, normalleştirme ve doğrulama süreçleri.
