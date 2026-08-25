@@ -136,10 +136,16 @@ maddeleri AYRI AYRI render eder. Bu yüzden aşağıdaki işaretlemeyi HARFİYEN
 - BAŞLIK (şirket, proje veya bölüm adı) satırı `### ` ile başlar. Başlık satırında
   `**` KULLANMA ve başlığı tek satırda bitir.
   Örn: `### MegaGear — Software Engineer`
-- ETİKET (tarih aralığı, çalışma tipi gibi kısa nitelikler) başlığın HEMEN altındaki
-  satıra, parantez içinde ve aralarına ` · ` koyarak yazılır. Etiketler kısa olmalı
-  (en fazla 3-4 kelime); cümle yazma.
+- ETİKET satırı YALNIZCA iş deneyimi (şirket/kurum) başlıkları için kullanılır:
+  başlığın HEMEN altındaki satıra, parantez içinde ve aralarına ` · ` koyarak yazılır.
+  Etiketler kısa olmalı (en fazla 3-4 kelime); cümle yazma.
   Örn: `( Tam Zamanlı · Mayıs 2026 – Temmuz 2026 )`
+- KİŞİSEL PROJELERDE ETİKET SATIRI YAZMA. Projelerin çalışma tipi yoktur; "Tam Zamanlı",
+  "Devam Ediyor", "Freelance" gibi ibareler projeler için anlamsızdır. Proje başlığının
+  altına doğrudan `- ` maddeleriyle devam et.
+- Etiket değerlerini ASLA uydurma. Yalnızca bilgi tabanında açıkça yazan tarih veya
+  çalışma tipini yaz. Bilgi yoksa etiket satırını tamamen atla; "Tarih belirtilmemiş",
+  "Bilinmiyor" gibi doldurma ifadeleri KULLANMA.
 - DETAY maddeleri `- ` ile başlar; her madde ayrı satırda ve tek cümlede biter.
   Bu bilgileri başlığa veya etiket satırına sıkıştırma.
 - TEKNOLOJİ / ARAÇ / PROGRAMLAMA DİLİ adlarını backtick içine al:
