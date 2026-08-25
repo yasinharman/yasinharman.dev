@@ -4,7 +4,7 @@
 
 Yasin Harman'ın kişisel portfolyo sitesinin **AI destekli** bir landing page şablonudur. Ziyaretçiler, klasik "hakkımda / projelerim" sayfalarında gezinmek yerine doğrudan **Jarvis** adında bir yapay zekâ asistanına soru sorarak Yasin hakkında bilgi alır.
 
-Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RAG servisini HTTP üzerinden birbirine bağlar.
+Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RAG servisini HTTP üzerinden birbirine bağlar. Sistemin genel resmi için [`docs/architecture.md`](docs/architecture.md).
 
 ## Öne Çıkan Özellikler
 
@@ -27,63 +27,98 @@ Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RA
 
 ```
 .
+├── README.md                    # bu dosya
+├── LICENSE
+├── package.json                 # kök orkestrasyon: iki servisi tek komutla çalıştırır
+├── docs/
+│   └── architecture.md          # sistem mimarisi, iki DB ayrımı, ingest akışı
+├── scripts/
+│   └── dev.sh                   # frontend + backend'i birlikte başlatır
 ├── frontend/                    # React + Vite uygulaması
 │   ├── src/
-│   │   ├── App.jsx              # Üst seviye state + webhook entegrasyonu
+│   │   ├── App.jsx              # üst seviye state + routing
 │   │   ├── main.jsx             # React root
-│   │   ├── components/
-│   │   │   ├── Header.jsx
-│   │   │   ├── Hero.jsx         # Başlık + AI arama kutusu
-│   │   │   └── ChatInterface.jsx
-│   │   └── hooks/
-│   │       ├── useTypewriter.js
-│   │       └── useIsLowPowerDevice.js
-│   ├── public/
-│   ├── docs/                    # Proje görselleri (ProjectsPage import'ları)
+│   │   ├── index.css
+│   │   ├── assets/              # site görselleri (src'den import edilir)
+│   │   ├── components/          # Header, Hero, ChatInterface, MessageBody, LanguageSwitch
+│   │   ├── pages/               # HomePage, ProjectsPage, ExperiencePage
+│   │   ├── hooks/               # useTypewriter, useIsLowPowerDevice
+│   │   └── i18n/                # LanguageContext + translations
+│   ├── public/                  # doğrudan servis edilen dosyalar (favicon, site doğrulama)
 │   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
+│   ├── vite.config.js           # dev proxy: /api -> localhost:8000
 │   ├── tailwind.config.js
 │   ├── postcss.config.js
-│   ├── prod.Dockerfile
+│   ├── prod.Dockerfile          # build (node) + serve (nginx)
 │   ├── nginx.conf
+│   ├── .dockerignore
 │   └── docker-compose.yml
 └── backend/                     # FastAPI RAG servisi
     ├── app/
     │   ├── main.py              # FastAPI app
-    │   ├── routes/              # /chat, /admin/ingest
+    │   ├── config.py            # pydantic-settings, .env'i cwd'den okur
+    │   ├── routes/              # chat.py (/chat), admin.py (/admin/ingest*)
     │   ├── agent.py             # LangChain agent + system prompt
     │   ├── guards.py            # input/output guard'lar
     │   ├── retriever.py         # Supabase RPC + Cohere rerank
-    │   ├── memory.py            # postgres'te session memory
+    │   ├── memory.py            # postgres'te oturum hafızası
+    │   ├── logging_db.py        # chat_logs
     │   └── ingest.py            # döküman ingestion + CLI
-    ├── migrations/001_init.sql
+    ├── data/                    # Jarvis'in bilgi tabanı (*.md) + yazım kuralları
+    ├── eval/                    # golden.yaml + run_eval.py (hit@4 raporu)
+    ├── tests/                   # pytest (integration marker'ı gerçek anahtar ister)
+    ├── migrations/              # 001/003 chat DB, 002 Supabase vector
     ├── Dockerfile
-    └── pyproject.toml
+    ├── pyproject.toml
+    ├── .env.example
+    ├── .dockerignore
+    └── docker-compose.yml
 ```
 
-## Kurulum (Frontend)
+> `notes/` dizini ve `.env` dosyaları `.gitignore`'ludur — kişisel çalışma
+> notları ve kimlik bilgileri repoya girmez.
+
+## Kurulum
+
+Gereksinimler: Node.js 20+, Python 3.11+, [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone <repo-url>
-cd AI-Assistant-Portfolio-Landing-Page-Template/frontend
-npm install
+git clone git@github.com:yasinharman/yasinharman.dev.git
+cd yasinharman.dev
+npm run setup        # frontend bağımlılıkları + kök .venv + backend editable install
 ```
 
-`frontend/` dizinine bir `.env` dosyası ekleyin:
+İki `.env` dosyası gerekir:
 
+```bash
+# backend/.env  — API anahtarları ve DB bağlantıları
+cp backend/.env.example backend/.env
+#   MODE=local bırakın; geliştirme sırasında prod DB'ye hiçbir şey yazılmaz.
+
+# frontend/.env — backend'in adresi
+echo 'VITE_API_URL=/api/chat' > frontend/.env
+#   Göreli adres, Vite'ın dev proxy'si üzerinden localhost:8000'e gider.
 ```
-VITE_API_URL=https://api.yasinharman.dev/chat
+
+Sonra:
+
+```bash
+npm run dev          # frontend :5173 + backend :8000, Ctrl+C ikisini birden kapatır
 ```
 
 ## Scriptler
 
-| Komut             | Açıklama                              |
-| ----------------- | ------------------------------------- |
-| `npm run dev`     | Geliştirme sunucusunu başlatır        |
-| `npm run build`   | Üretim için derler                    |
-| `npm run preview` | Build çıktısını yerelde önizler       |
-| `npm run lint`    | ESLint ile kod kalitesini kontrol eder|
+Kök dizinden:
+
+| Komut                  | Açıklama                                                     |
+| ---------------------- | ------------------------------------------------------------ |
+| `npm run setup`        | Frontend bağımlılıkları + `.venv` + backend editable install  |
+| `npm run dev`          | Frontend ve backend'i birlikte başlatır (`scripts/dev.sh`)    |
+| `npm run dev:frontend` | Yalnızca Vite dev sunucusu                                    |
+| `npm run dev:backend`  | Yalnızca uvicorn (`--reload`, port 8000)                      |
+| `npm run build`        | Frontend'i üretim için derler (`frontend/dist`)               |
+| `npm run lint`         | ESLint — ⚠️ config ve `eslint` bağımlılığı henüz eklenmedi     |
+| `npm run test`         | Backend pytest                                                |
 
 ## RAG Servisi (Backend)
 
@@ -111,4 +146,4 @@ Yanıt aşağıdaki alanlardan herhangi biri olabilir: `response`, `output`, `te
 
 ## Lisans
 
-Kişisel portfolyo projesidir. Şablon olarak kullanmak isteyenler serbestçe fork'layabilir.
+[MIT](LICENSE) — kişisel portfolyo projesidir, şablon olarak serbestçe fork'layabilirsiniz.

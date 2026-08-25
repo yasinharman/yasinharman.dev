@@ -53,10 +53,12 @@ eşleşmeler kesiliyorsa düşür (~0.15).
 ## Local dev
 
 ```bash
+# Ortam kurulumu repo kokunden yapilir; backend kendi .venv'ini tutmaz.
+cd <repo-root> && npm run setup      # kok .venv olusturur + backend'i editable kurar
+. .venv/bin/activate
+
 cd backend
 cp .env.example .env       # fill credentials; keep MODE=local so dev never writes to the prod DB
-python -m venv .venv && . .venv/Scripts/activate   # PowerShell: .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
 
 # apply migrations to your dev postgres
 psql "$DATABASE_URL" -f migrations/001_init.sql
@@ -71,12 +73,15 @@ curl -s -X POST localhost:8000/chat \
 
 ## Ingest a single document (opsiyonel ek kaynak)
 
+`data/` korpusunun disinda kalan tekil bir belgeyi (PDF/DOCX) da besleyebilirsin.
+Ornekteki dosya repoda tutulmaz; kendi yolunu ver.
+
 ```bash
-python -m app.ingest ./docs/cv.pdf --source cv
+python -m app.ingest /path/to/belge.pdf --source cv
 # or via HTTP
 curl -X POST http://localhost:8000/admin/ingest \
   -H "X-API-Key: $ADMIN_API_KEY" \
-  -F "file=@./docs/cv.pdf" \
+  -F "file=@/path/to/belge.pdf" \
   -F "source=cv"
 ```
 
