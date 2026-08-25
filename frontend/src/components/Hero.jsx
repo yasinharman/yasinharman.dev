@@ -40,7 +40,7 @@ export function Hero({ onSearchSubmit }) {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-900/40 to-zinc-700 rounded-full blur opacity-40 group-hover:opacity-70 group-hover:from-orange-600/40 transition duration-500 group-hover:duration-200"></div>
           <div className="relative flex items-center bg-zinc-900 border border-zinc-800 rounded-full p-2 shadow-2xl transition-all duration-300 focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/50 focus-within:shadow-[0_0_40px_rgba(249,115,22,0.2)]">
 
-            <div className="pl-4 pr-2 text-zinc-500 flex items-center justify-center">
+            <div className="pl-4 pr-2 text-zinc-500 hidden sm:flex items-center justify-center">
               <iconify-icon icon="solar:magnifer-linear" width="22" height="22"></iconify-icon>
             </div>
 
@@ -49,7 +49,7 @@ export function Hero({ onSearchSubmit }) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={placeholderText}
-              className="flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-600 text-lg py-3 px-2 w-full"
+              className="min-w-0 flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-600 text-base md:text-lg py-3 pl-4 pr-2 sm:pl-2 text-ellipsis"
               autoComplete="off"
             />
 

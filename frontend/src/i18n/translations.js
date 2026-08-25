@@ -23,6 +23,8 @@ export const translations = {
       experience: 'İş Tecrübelerim',
       projects: 'Projelerim',
       backHome: 'Anasayfaya dön',
+      openMenu: 'Menüyü aç',
+      closeMenu: 'Menüyü kapat',
     },
 
     hero: {
@@ -79,6 +81,8 @@ export const translations = {
       experience: 'My Experience',
       projects: 'My Projects',
       backHome: 'Back to home',
+      openMenu: 'Open menu',
+      closeMenu: 'Close menu',
     },
 
     hero: {

@@ -26,8 +26,8 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-4 py-24 relative">
-      <div className="w-full max-w-4xl h-[80vh] flex flex-col bg-zinc-900/75 border border-zinc-800/60 rounded-3xl overflow-hidden shadow-2xl relative z-10">
+    <section className="h-screen [height:100dvh] flex flex-col items-center justify-center px-4 pt-20 pb-20 md:pt-24 md:pb-24 relative">
+      <div className="w-full max-w-4xl h-full flex flex-col bg-zinc-900/75 border border-zinc-800/60 rounded-3xl overflow-hidden shadow-2xl relative z-10">
         
         {/* Chat Header */}
         <div className="px-6 py-4 border-b border-orange-500/20 bg-zinc-900/50 flex items-center gap-4">
@@ -42,7 +42,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto chat-scroll p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden chat-scroll p-4 md:p-6 space-y-6">
           {messages.map((msg) => {
             const isUser = msg.role === 'user';
             // Başlıklı/maddeli cevaplar %70 balonda sıkışıyor; onları doküman gibi genişlet.
@@ -54,7 +54,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
                 className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
                 <div
-                  className={`rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed break-words ${
+                  className={`min-w-0 rounded-2xl px-4 py-3.5 md:px-5 text-[15px] leading-relaxed break-words [overflow-wrap:anywhere] ${
                     isWide ? 'w-full md:max-w-[94%]' : 'max-w-[80%] md:max-w-[70%]'
                   } ${
                     isUser
@@ -92,7 +92,7 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={t.chat.inputPlaceholder}
-              className="flex-1 bg-transparent border-none outline-none py-4 pl-5 pr-14 text-zinc-100 placeholder:text-zinc-500"
+              className="min-w-0 flex-1 bg-transparent border-none outline-none py-4 pl-5 pr-14 text-zinc-100 placeholder:text-zinc-500 text-ellipsis"
               disabled={isTyping}
               autoComplete="off"
             />

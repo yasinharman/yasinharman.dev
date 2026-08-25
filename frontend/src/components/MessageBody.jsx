@@ -176,11 +176,11 @@ export function MessageBody({ content }) {
   const blocks = parseAnswer(content);
 
   if (!blocks.some((block) => block.type === 'heading' || block.type === 'bullet')) {
-    return <span className="whitespace-pre-wrap break-words">{renderInline(String(content).trim())}</span>;
+    return <span className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{renderInline(String(content).trim())}</span>;
   }
 
   return (
-    <div className="space-y-2.5 break-words">
+    <div className="space-y-2.5 break-words [overflow-wrap:anywhere]">
       {blocks.map((block, index) => {
         // Bloklar sırayla açılır: cevap tek seferde geliyor ama "kuruluyor" gibi görünür.
         const style = { animationDelay: `${Math.min(index * 60, 480)}ms`, animationFillMode: 'both' };
@@ -224,7 +224,7 @@ export function MessageBody({ content }) {
                   block.depth ? 'h-1 w-1 rounded-full bg-orange-500/40' : 'h-1.5 w-1.5 rotate-45 bg-orange-500/70'
                 }`}
               />
-              <p className="flex-1 text-[15px] leading-relaxed text-orange-50/85">{renderInline(block.text)}</p>
+              <p className="min-w-0 flex-1 text-[15px] leading-relaxed text-orange-50/85">{renderInline(block.text)}</p>
             </div>
           );
         }
