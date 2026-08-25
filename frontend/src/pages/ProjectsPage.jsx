@@ -7,11 +7,11 @@ import { useLanguage } from '../i18n/LanguageContext';
  * import yollarındaki dosya adını kendi adınla değiştir.
  */
 // ⬇️ DÜZENLE: 1. proje görseli — docs/ içindeki dosya adını yaz
-import project1Image from '../../docs/ETL.png';
+import project1Image from '../../docs/internship-tracker.png';
 // ⬇️ DÜZENLE: 2. proje görseli — docs/ içindeki dosya adını yaz
 import project2Image from '../../docs/business.png';
 // ⬇️ DÜZENLE: 3. proje görseli — docs/ içindeki dosya adını yaz
-import project3Image from '../../docs/n8n-workflow.png';
+import project3Image from '../../docs/rag-agent.png';
 
 /**
  * Projeler verisi.
@@ -21,7 +21,7 @@ const PROJECTS_DATA = [
   {
     id: 1,
     // ⬇️ DÜZENLE: Proje başlığı (dile göre ayrı; aynıysa iki alana da aynısını yazın)
-    title: { tr: 'Automated Scraper Bot', en: 'Automated Scraper Bot' },
+    title: { tr: 'Internship Tracker', en: 'Internship Tracker' },
     category: { tr: 'ETL System', en: 'ETL System' },
     image: project1Image,
     // ⬇️ DÜZENLE: Projenin GitHub repository linki
@@ -29,8 +29,8 @@ const PROJECTS_DATA = [
     // ⬇️ DÜZENLE: Projeye tıklandığında gidilecek link
     link: 'https://dashboard.yasinharman.dev/',
     description: {
-      tr: '5 farklı kariyer sitesinden girilen anahtar kelime ile eşleşen iş ilanlarını bulan otomatik bir ETL yapısı ve sonuçları görselleştiren web tabanlı bir dashboard.',
-      en: 'An automated ETL pipeline that finds job postings matching a given keyword across 5 different career sites, plus a web dashboard that visualises the results.',
+      tr: 'Başlıca kariyer sitelerinden part-time iş ve staj ilanlarını belirli aralıklarla otomatik olarak çeken bir ETL sistemi; toplanan ilanlar filtrelenebilir bir dashboard üzerinden takip ediliyor.',
+      en: 'An ETL system that automatically pulls part-time job and internship postings from major career sites at regular intervals; the collected listings are tracked through a filterable dashboard.',
     },
     techStack: ['Python', 'SQL', 'PostgreSQL', 'Streamlit', 'Scrapy', 'Playwright', 'Docker', 'Dokploy']
   },
@@ -59,17 +59,6 @@ const PROJECTS_DATA = [
       en: 'An AI agent I trained to answer questions about me, so recruiters can find out what they want to know about me quickly.',
     },
     techStack: ['React', 'Vite', 'RAG', 'OpenAI API', 'n8n', 'Supabase', 'Docker', 'Dokploy']
-  },
-  {
-    id: 4,
-    title: { tr: 'Harcules AI', en: 'Harcules AI' },
-    category: { tr: 'YAKINDA', en: 'COMING SOON' },
-    image: null,
-    github: null,
-    link: null,
-    comingSoon: true,
-    description: { tr: '', en: '' },
-    techStack: []
   }
 ];
 
@@ -94,7 +83,7 @@ export function ProjectsPage() {
             <span className="w-12 h-px bg-gradient-to-l from-transparent to-white/20 hidden sm:block" />
           </h1>
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 items-start gap-8 md:gap-10">
             {PROJECTS_DATA.map((project, index) => {
               const isExpanded = expandedId === project.id;
 
