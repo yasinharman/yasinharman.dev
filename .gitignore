@@ -1,17 +1,20 @@
-# Node / frontend
+# ---------------------------------------------------------------------------
+# Bagimliliklar ve build ciktilari
+# ---------------------------------------------------------------------------
 node_modules/
 dist/
 .vite/
-.DS_Store
 
-# Env
+# ---------------------------------------------------------------------------
+# Ortam degiskenleri - .env.example haric hicbiri repoya girmez
+# ---------------------------------------------------------------------------
 .env
-.env.local
-.env.*.local
-backend/.env
-backend/.env.local
+.env.*
+!.env.example
 
+# ---------------------------------------------------------------------------
 # Python
+# ---------------------------------------------------------------------------
 __pycache__/
 *.pyc
 *.pyo
@@ -21,13 +24,37 @@ venv/
 .ruff_cache/
 *.egg-info/
 
-# Editor
+# ---------------------------------------------------------------------------
+# Kisisel calisma dosyalari
+#
+# notes/ repoya asla girmez: CV notlari, is gecmisi kaynaklari, ic degerlendirme
+# ve acik guvenlik bulgulari icerir. Icerikleri (varsa) elle ExperiencePage.jsx
+# veya backend/data/*.md dosyalarina aktarilir.
+# ---------------------------------------------------------------------------
+notes/
+
+# Ayni dosyalar yanlislikla baska bir dizine kopyalanirsa yine yakalansin diye
+# isim bazli ikinci emniyet katmani.
+cv.pdf
+scaleaiproject.md
+yapilacaklar.md
+
+# Eval/test ciktilari: uretilen cevaplar kisisel bilgi icerebilir (bir kez
+# .rag_test_results.json olarak repoya sizmisti).
+.rag_test_results.json
+*_test_results.json
+
+# ---------------------------------------------------------------------------
+# Editor ve isletim sistemi
+# ---------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
+.DS_Store
+Thumbs.db
 
-# CV ve is gecmisi kaynak notlari: kisisel iletisim bilgisi ve gizli proje
-# adlari icerirler, public repoya girmemeli. Icerikleri ExperiencePage.jsx'e
-# elle aktarilir; dosyalarin kendisi repoda tutulmaz.
-cv.pdf
-scaleaiproject.md
+# ---------------------------------------------------------------------------
+# Gecici dosyalar
+# ---------------------------------------------------------------------------
+*.log
+*.tmp

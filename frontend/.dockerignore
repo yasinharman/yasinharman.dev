@@ -1,0 +1,26 @@
+# prod.Dockerfile "COPY . ." yaptigi icin build context'e ne girdigi onemli.
+# Bu dosya olmadan frontend/.env builder katmanina kopyalaniyordu.
+#
+# DIKKAT: nginx.conf, index.html, vite.config.js, tailwind.config.js,
+# postcss.config.js, package.json, package-lock.json, src/ ve public/
+# build icin GEREKLI - buraya eklenmemeli.
+
+node_modules
+dist
+
+# Sirlar: VITE_API_URL build arg olarak disaridan gelir, .env dosyasina gerek yok
+.env
+.env.*
+
+# Kaynak kontrolu ve editor
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+
+# Image'a girmesi gereksiz olanlar
+*.md
+docker-compose.yml
+npm-debug.log*
+.DS_Store
