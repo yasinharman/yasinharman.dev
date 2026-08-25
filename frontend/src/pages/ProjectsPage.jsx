@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 /**
- * Proje görselleri docs/ klasöründen alınır.
- * Yeni bir görsel eklemek için: docs/ klasörüne dosyayı koy ve aşağıdaki
+ * Proje görselleri src/assets/ klasöründen alınır.
+ * Yeni bir görsel eklemek için: src/assets/ klasörüne dosyayı koy ve aşağıdaki
  * import yollarındaki dosya adını kendi adınla değiştir.
  */
-// ⬇️ DÜZENLE: 1. proje görseli — docs/ içindeki dosya adını yaz
-import project1Image from '../../docs/internship-tracker.png';
-// ⬇️ DÜZENLE: 2. proje görseli — docs/ içindeki dosya adını yaz
-import project2Image from '../../docs/business.png';
-// ⬇️ DÜZENLE: 3. proje görseli — docs/ içindeki dosya adını yaz
-import project3Image from '../../docs/rag-agent.png';
+// ⬇️ DÜZENLE: 1. proje görseli — src/assets/ içindeki dosya adını yaz
+import project1Image from '../assets/internship-tracker.png';
+// ⬇️ DÜZENLE: 2. proje görseli — src/assets/ içindeki dosya adını yaz
+import project2Image from '../assets/business.png';
+// ⬇️ DÜZENLE: 3. proje görseli — src/assets/ içindeki dosya adını yaz
+import project3Image from '../assets/rag-agent.png';
 
 /**
  * Projeler verisi.

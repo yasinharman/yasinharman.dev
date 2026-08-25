@@ -1,7 +1,7 @@
 import { useLanguage } from '../i18n/LanguageContext';
 
 /**
- * Şirket logoları docs/ klasöründen alınır ve kartın üst bölümünde arka plan
+ * Şirket logoları src/assets/ klasöründen alınır ve kartın üst bölümünde arka plan
  * olarak kullanılır.
  *
  * Buradaki PNG'ler saydam zeminli ve markası beyazdır; koyu kart üzerinde
@@ -9,14 +9,14 @@ import { useLanguage } from '../i18n/LanguageContext';
  * biçimi kullanın (saydam zemin + açık renkli marka), yoksa koyu kartın üstünde
  * görünmez veya beyaz bir kutu olarak çıkar.
  *
- * Yeni bir logo eklemek için: docs/ klasörüne dosyayı koy, aşağıya import et ve
+ * Yeni bir logo eklemek için: src/assets/ klasörüne dosyayı koy, aşağıya import et ve
  * ilgili deneyimin `logo` alanına yaz. `logo: null` bırakılırsa kart logosuz
  * görünür, bozulmaz.
  */
-// ⬇️ DÜZENLE: MegaGear logosu — docs/ içindeki dosya adını yaz
-import megagearLogo from '../../docs/megagear-logo.png';
-// ⬇️ DÜZENLE: Upwork logosu — docs/ içindeki dosya adını yaz
-import upworkLogo from '../../docs/upwork-logo.png';
+// ⬇️ DÜZENLE: MegaGear logosu — src/assets/ içindeki dosya adını yaz
+import megagearLogo from '../assets/megagear-logo.png';
+// ⬇️ DÜZENLE: Upwork logosu — src/assets/ içindeki dosya adını yaz
+import upworkLogo from '../assets/upwork-logo.png';
 
 /**
  * İş deneyimi verisi.
