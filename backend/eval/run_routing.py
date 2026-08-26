@@ -67,6 +67,14 @@ def _degerlendir(expect: str, aradi: bool, reddetti: bool) -> tuple[bool, str]:
 async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
     from app.agent import agent_executor
     from app.retriever import retrieval_trace
+    from app.router import courtesy_reply
+
+    # /chat route'uyla AYNI sıra: deterministik nezaket kontrolü LLM'den önce gelir.
+    nazik = courtesy_reply(case["question"], "tr")
+    if nazik is not None:
+        gecti, gozlem = _degerlendir(case["expect"], aradi=False, reddetti=False)
+        return {**case, "gecti": gecti, "gozlem": f"{gozlem} (deterministik)",
+                "aradi": False, "cevap": nazik[:150], "sorgular": []}
 
     async with sem:
         trace: list[dict] = []

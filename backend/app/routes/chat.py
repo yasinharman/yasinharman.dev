@@ -8,6 +8,7 @@ from ..guards import input_guard, output_guard, blocked_user_message, error_user
 from ..agent import agent_executor
 from ..logging_db import log_blocked, log_allowed, log_error
 from ..ratelimit import client_ip, get_limiter
+from ..router import courtesy_reply
 from ..retriever import retrieval_trace
 
 log = structlog.get_logger()
@@ -40,6 +41,20 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
         latency = int((time.monotonic() - t0) * 1000)
         await log_blocked(req.session_id, req.message, in_verdict.reason or in_verdict.category, latency)
         return ChatResponse(response=blocked_user_message(req.lang), blocked=True)
+
+    # ADIM 5.5: Selamlama/teşekkür — LLM'e hiç gitmeden hazır cevap.
+    # Sabit bir kelime kümesi için model çağırmak hem para hem gecikme, üstelik
+    # güvenilir de değildi: temiz bir oturumda "merhaba" yazan ziyaretçi
+    # "sadece Yasin hakkındaki soruları cevaplamak için eğitildim" alıyordu.
+    # Mesaj geçmişe yine yazılır ki sonraki soru bağlamı kaybetmesin.
+    if (nazik := courtesy_reply(req.message, req.lang)) is not None:
+        await append_message(req.session_id, "user", req.message)
+        await append_message(req.session_id, "assistant", nazik)
+        latency = int((time.monotonic() - t0) * 1000)
+        await log_allowed(req.session_id, req.message, nazik, latency, reason="courtesy")
+        log.info("chat", session_id=req.session_id, lang=req.lang, latency_ms=latency,
+                 sanitize="courtesy", kb_calls=0)
+        return ChatResponse(response=nazik, blocked=False)
 
     # ADIM 6: History ile birlikte agent'ı çağır — agent system prompt + history + input ile LLM'i çalıştırır, gerektikçe portfolio_kb tool'unu kullanarak (max 4 iterasyon) final cevabı üretir.
     history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
