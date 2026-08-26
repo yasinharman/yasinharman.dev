@@ -108,12 +108,29 @@ def get_limiter() -> RateLimiter:
 
 
 def client_ip(request: Request) -> str:
-    """Traefik/Coolify arkasında gerçek istemci adresi.
+    """Gerçek istemci adresi. Zincir: istemci → Cloudflare → Traefik → uvicorn.
 
-    XFF'in SON elemanı alınır: proxy, gördüğü peer adresini listeye EKLER, dolayısıyla
-    istemci sahte bir X-Forwarded-For yollasa bile gerçek adres sonda kalır. İlk elemanı
-    almak limiti tek bir header ile atlanabilir hale getirirdi.
+    `CF-Connecting-IP` kullanılır: Cloudflare bu header'ı KENDİSİ yazar ve istemcinin
+    gönderdiğini ezer, yani origin'e yalnızca Cloudflare üzerinden gelinebildiği sürece
+    spoof edilemez.
+
+    X-Forwarded-For bu topolojide KULLANILAMAZ — ilk sürüm onu kullanıyordu ve canlıda
+    limit hiç tetiklenmedi (22 ardışık istek, sıfır 429). Sebebi: Cloudflare gerçek
+    istemciyi XFF'e ekliyor, Traefik de gördüğü peer'i (Cloudflare EDGE adresi) sona
+    ekliyor. Son eleman her istekte değişen bir edge IP'si oluyor, dolayısıyla her istek
+    kendi kovasına düşüyordu. İlk elemanı almak da çözüm değil: onu istemci uydurabilir.
+
+    Cloudflare devre dışı kalırsa (doğrudan Traefik) XFF'in son elemanına düşülür; o
+    topolojide son eleman gerçekten Traefik'in gördüğü peer'dır.
+
+    NOT: Origin IP'si bilinip Cloudflare atlanabilirse sahte bir CF-Connecting-IP ile
+    limit aşılabilir. Kalıcı çözüm origin'e yalnızca Cloudflare IP aralıklarından
+    erişime izin vermek; ikinci bir katman olarak Cloudflare'ın kendi rate limit kuralı.
     """
+    cf = request.headers.get("cf-connecting-ip")
+    if cf and cf.strip():
+        return cf.strip()
+
     xff = request.headers.get("x-forwarded-for")
     if xff:
         parts = [p.strip() for p in xff.split(",") if p.strip()]

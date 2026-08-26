@@ -69,21 +69,51 @@ def test_eski_anahtarlar_temizlenir():
     assert len(limiter._ip._hits) == 1, "süresi dolmuş anahtarlar temizlenmedi"
 
 
+def test_client_ip_cloudflare_headerini_tercih_eder():
+    """Canlı regresyon: ilk sürüm XFF'in son elemanını alıyordu ve limit hiç
+    tetiklenmiyordu (22 ardışık istek, sıfır 429). Zincir istemci → Cloudflare →
+    Traefik → uvicorn olduğu için XFF'in sonunda her istekte değişen bir Cloudflare
+    EDGE adresi vardı; her istek kendi kovasına düşüyordu."""
+    headers = [
+        (b"cf-connecting-ip", b"198.51.100.7"),
+        # Cloudflare gercek istemciyi ekler, Traefik de gordugu edge adresini ekler.
+        (b"x-forwarded-for", b"198.51.100.7, 172.71.150.33"),
+    ]
+    assert client_ip(_istek(headers)) == "198.51.100.7"
+
+
+def test_cloudflare_edge_degisse_de_ayni_kova():
+    """Aynı ziyaretçinin ardışık istekleri farklı CF edge'lerinden gelse bile tek
+    anahtara düşmeli — limitin çalışmasının önkoşulu bu."""
+    limiter = RateLimiter(per_min=2, per_day=100)
+    edges = (b"172.71.150.33", b"172.68.22.9", b"104.23.160.5")
+    sonuclar = []
+    for i, edge in enumerate(edges):
+        ip = client_ip(_istek([(b"cf-connecting-ip", b"198.51.100.7"),
+                               (b"x-forwarded-for", b"198.51.100.7, " + edge)]))
+        sonuclar.append(limiter.check(ip, "s1", now=1000.0 + i).allowed)
+
+    assert sonuclar == [True, True, False], "edge degisimi limiti sifirliyor"
+
+
 @pytest.mark.parametrize(
     ("xff", "beklenen"),
     [
         (None, "10.0.0.1"),
         (b"203.0.113.9", "203.0.113.9"),
-        # Istemcinin uydurdugu adres basta, Traefik'in gordugu gercek adres sonda.
+        # Cloudflare yoksa son eleman gercekten Traefik'in gordugu peer'dir.
         (b"1.2.3.4, 203.0.113.9", "203.0.113.9"),
         (b"  ,  203.0.113.9  ", "203.0.113.9"),
     ],
 )
-def test_client_ip_xffin_son_elemanini_alir(xff, beklenen):
-    """Proxy XFF'e gördüğü peer'ı EKLER; ilk elemanı almak limiti tek header ile
-    atlanabilir yapardı."""
+def test_cloudflare_yoksa_xffin_son_elemanina_dusulur(xff, beklenen):
     headers = [(b"x-forwarded-for", xff)] if xff else []
     assert client_ip(_istek(headers)) == beklenen
+
+
+def test_bos_cf_headeri_xffi_engellemez():
+    headers = [(b"cf-connecting-ip", b"  "), (b"x-forwarded-for", b"203.0.113.9")]
+    assert client_ip(_istek(headers)) == "203.0.113.9"
 
 
 def test_client_ip_istemci_yoksa_patlamaz():
