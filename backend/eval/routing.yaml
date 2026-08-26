@@ -10,6 +10,9 @@
 #                ARAMADAN "bilgim yok" demek HATADIR.
 #   personal  -> korpusta olmayan kişisel detay; aranmadan nazikçe reddedilir.
 #   unrelated -> Yasin'le ilgisiz, hakaret, test mesajı, bot'a meta soru.
+#   courtesy  -> teşekkür/selamlama. Aranmaz ama REDDEDİLMEZ de: nazik bir
+#                karşılık verilir. Dördüncü kategori olarak eklendi çünkü
+#                unrelated'in sabit cevabı ("yardımcı olamam") burada yanlış.
 #
 # Kullanım: her satır tek bir sınıflandırma assert'i. LLM'in cevap ÜRETMESİ
 # gerekmez, yalnızca kategori. Hedef: >= %95 doğruluk (bkz. yapilacaklar 3.1).
@@ -152,15 +155,31 @@ cases:
     expect: unrelated
 
 # ---------------------------------------------------------------------------
-# ⚠️ POLİTİKA KARARI BEKLEYENLER — sınıflandırma değil, ürün kararı.
-#    Karar verilene kadar eval'e dahil EDİLMEZ (expect alanı yok).
+# Politika kararı verilmiş vakalar (2026-08-26, kullanıcı onayı)
 # ---------------------------------------------------------------------------
-undecided:
-  - question: yasinin maaş beklentisi nedir
-    secenekler: >
-      career (ara, korpusta yok, "bu bilgi paylaşılmamış" de) VEYA
-      personal (aramadan reddet). Recruiter'ın meşru sorusu; ilki daha dürüst.
-  - question: teşşekkürler
-    secenekler: >
-      Hiçbir kategoriye girmiyor. Router'a dördüncü bir "courtesy" değeri mi
-      eklensin, yoksa unrelated'in nazik cevabına mı düşsün?
+  - id: maas-beklentisi
+    question: yasinin maaş beklentisi nedir
+    expect: career
+    note: >
+      Kullanıcıya görünen cevap iki yolda da aynı ("bu konuda bilgim yok, Yasin ile
+      iletişime geçin") ve bu doğru davranış olarak onaylandı. career seçildi çünkü
+      o cevap ARANDIKTAN SONRA verilmeli: bugün aramadan veriliyor, yani doğru cevabı
+      tesadüfen üretiyor. Maaş bilgisi korpusa eklenirse career yolu kendiliğinden
+      çalışır, personal yolu çalışmaz.
+
+  - id: nezaket-tesekkur
+    question: teşşekkürler
+    expect: courtesy
+  - id: nezaket-sagol
+    question: sağol
+    expect: courtesy
+    synthetic: true
+  - id: nezaket-selam
+    question: merhaba
+    expect: courtesy
+    synthetic: true
+    note: >
+      synthetic işaretli iki vaka gerçek KULLANICI trafiğinden değil, ama davranış
+      2026-08-26'da canlıda doğrulandı: temiz bir oturumda ilk mesaj olarak
+      "merhaba" / "selam" / "teşekkürler" yazınca bot üçünü de reddediyor.
+      Tek örnekli bir kategori ölçülemeyeceği için eklendiler.
