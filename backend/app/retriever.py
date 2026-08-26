@@ -123,34 +123,26 @@ async def _expand_overviews(kept: list[Document]) -> list[Document]:
     return expanded
 
 
-def _apply_cutoff(reranked: list[Document], s: Settings) -> tuple[list[Document], float, bool]:
-    """Rerank skorlarini dagilima gore keser; (kept, cutoff, fallback_used) doner.
+def _apply_cutoff(reranked: list[Document], s: Settings) -> tuple[list[Document], float]:
+    """Esigin altindaki chunk'lari eler; (kept, cutoff) doner.
 
-    Sabit esik calismiyordu cunku Cohere skorlari sorgunun BICIMINE gore uculuyor:
-    ayni chunk "hobiler" icin 0.09, "Yasin'in hobileri neler?" icin 0.99 donuyor
-    (tests/test_agent_answers.py docstring'i). 0.3 bu dagilimda anlamli bir sinir
-    degil; altinda kalan her sey elenince kept=[] oluyor, _format_docs "Sonuc
-    bulunamadi." donuyor ve model aramanin basarisiz oldugunu bilmeden "bilgim yok"
-    diyordu — tek bir sihirli sayi, tum sistemin sessizce basarisiz olma noktasi.
+    HICBIR SEY GECEMEZSE BOS DONER — bu bilincli. Bir ara bos yerine en iyi 3 chunk
+    donduruluyordu ("sessiz basarisizlik" korkusuyla) ve iki olcum bunun yanlis
+    oldugunu gosterdi: canli veride hic tetiklenmedi (31 aramanin 0'i), buna karsilik
+    golden.yaml'daki dort negatif vakayi birden kiriyordu. Kapsam disi bir soruya
+    alakasiz chunk vermek halusinasyon yuzeyi acar; portfolyo asistaninda en pahali
+    hata budur.
 
-    Esik artik top1'e gore belirleniyor. Hicbir sey gecemezse (top1 ABS_FLOOR'un da
-    altindaysa) en iyi birkac chunk yine de donduruluyor ve fallback isaretleniyor:
-    alakasiz context riski var ama bos donmekten iyi, cunku prompt zaten "context'te
-    yoksa bilgim yok de" diyor ve bugunku davranista model aramanin bos dondugunu
-    bile goremiyordu. Kalici cozum reformulate dongusu (notes/yapilacaklar.md 3.4).
+    "Kac aramada 0 chunk dondu" sorusu chat_logs.retrieval -> kept=0 ile sorgulanir.
     """
     if not reranked:
-        return [], 0.0, False
-    top1 = reranked[0].metadata.get("rerank_score", 0.0)
-    cutoff = max(s.RERANK_ABS_FLOOR, top1 * s.RERANK_REL_RATIO)
-    kept = [d for d in reranked if d.metadata.get("rerank_score", 0.0) >= cutoff]
-    if kept:
-        return kept, cutoff, False
-    return reranked[: s.RERANK_FALLBACK_N], cutoff, True
+        return [], 0.0
+    cutoff = s.RERANK_SCORE_THRESHOLD
+    return [d for d in reranked if d.metadata.get("rerank_score", 0.0) >= cutoff], cutoff
 
 
 def _record_trace(query: str, reranked: list[Document], kept: list[Document],
-                  cutoff: float, fallback_used: bool) -> None:
+                  cutoff: float) -> None:
     trace = retrieval_trace.get()
     if trace is None:
         return
@@ -168,23 +160,21 @@ def _record_trace(query: str, reranked: list[Document], kept: list[Document],
         ],
         "kept": len(kept),
         "cutoff": round(cutoff, 4),
-        # Kac sorguda hicbir chunk esigi gecemedi — bunu olcmuyorduk.
-        "fallback_used": fallback_used,
     })
 
 
 async def search(query: str) -> list[Document]:
     s = get_settings()
     docs = await _vector_search(query, k=s.RETRIEVER_K)
-    cutoff, fallback_used = 0.0, False
+    cutoff = 0.0
     try:
         reranked = await asyncio.to_thread(_rerank, query, docs, s.RERANK_TOP_N)
-        kept, cutoff, fallback_used = _apply_cutoff(reranked, s)
+        kept, cutoff = _apply_cutoff(reranked, s)
     except Exception:
         # Cohere erişilemezse tamamen kör kalma: similarity sırasıyla devam et.
         # Degraded mod — rerank floor uygulanamaz, alakasız chunk sızabilir.
         structlog.get_logger().warning("rerank_failed_fallback", query=query[:80])
         reranked = kept = docs[: s.RERANK_TOP_N]
     kept = await _expand_overviews(kept)
-    _record_trace(query, reranked, kept, cutoff, fallback_used)
+    _record_trace(query, reranked, kept, cutoff)
     return kept

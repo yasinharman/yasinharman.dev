@@ -36,7 +36,16 @@ _SELAMLAMA_KELIMELERI = {
     "merhaba", "merhabalar", "selam", "selamlar", "selamun", "aleykum",
     "gunaydin", "gunler", "aksamlar", "geceler", "sabahlar",
     "nasilsin", "nasilsiniz", "naber", "haber", "hosgeldin",
-    "hi", "hey", "hello", "morning", "evening", "how", "are", "you",
+    "hi", "hey", "hello", "morning", "evening",
+}
+
+# Kelimelerine ayrilamayan ifadeler. "how are you" kelime bazli eslesseydi "how"
+# tek basina da selamlama sayilirdi — nitekim oyle oldu: bir takip sorusu olarak
+# yazilan "how?" selamlama karsiligi aliyordu ("Hello! What would you like to
+# know about Yasin?") ve gercek soru hic cevaplanmiyordu.
+_SELAMLAMA_IFADELERI = {
+    "how are you", "how are you doing", "how is it going",
+    "nasil gidiyor", "ne var ne yok",
 }
 
 _TESEKKUR_KELIMELERI = {
@@ -51,7 +60,7 @@ _TESEKKUR_KELIMELERI = {
 _DOLGU_KELIMELERI = {
     "ederim", "iyi", "cok", "tekrar", "ya", "be", "de", "da", "ve",
     "kardesim", "hocam", "abi", "canim",
-    "very", "much", "so", "a", "lot", "good", "day",
+    "very", "much", "so", "a", "lot", "good", "day", "you", "u",
 }
 
 _MAX_KELIME = 6  # daha uzunu artik bir nezaket mesaji degil, cumledir
@@ -90,7 +99,11 @@ def courtesy_reply(message: str, lang: str = "tr") -> str | None:
 
     None dönmesi "normal akışa devam et" demektir; çağıran taraf agent'ı çalıştırır.
     """
-    kelimeler = _normalize(message).split()
+    metin = _normalize(message)
+    if metin in _SELAMLAMA_IFADELERI:
+        return _SELAMLAMA_CEVABI.get(lang, _SELAMLAMA_CEVABI["tr"])
+
+    kelimeler = metin.split()
     if not kelimeler or len(kelimeler) > _MAX_KELIME:
         return None
 
@@ -126,6 +139,8 @@ career — Yasin'in kariyeri, profili veya kim olduğu.
 personal — Yasin'in kariyer dışı özel hayatı. Bu KAPALI bir listedir, SADECE şunlar:
   zevkleri (en sevdiği yemek / renk / müzik / film / takım), ilişki ve aile durumu,
   sağlığı, dini görüşü, siyasi görüşü, fiziksel özellikleri (boy, kilo, görünüş).
+  YAŞ BURAYA GİRMEZ — biyografik bir bilgidir, bilgi tabanında vardır → career.
+  ("Yasin kaç yaşında", "Yasin'in yaşı kaç" ikisi de career.)
   Bu listede OLMAYAN hiçbir şeyi personal yapma. Özellikle İLETİŞİM BİLGİLERİ
   (e-posta, telefon, LinkedIn, GitHub, konum) bu listede YOKTUR → career'dır;
   "özel bilgi" gibi durmaları onları personal yapmaz.
@@ -159,13 +174,27 @@ arama boş dönerse dürüst cevabı bir sonraki adım verir.
 
 # ALANLAR
 
-resolved_query — Kullanıcının GERÇEKTE sorduğu tam soru.
+resolved_query — Kullanıcının GERÇEKTE sorduğu tam soru, KULLANICININ KENDİ DİLİNDE.
   Mesaj eksik, zamirli veya bir öncekine bağlıysa ("peki ya", "o zaman", "nasıl",
   "bunu detaylandır") konuşma geçmişiyle birleştirip tam soruyu yeniden kur.
   Mesaj zaten tamsa olduğu gibi bırak.
+  DİLİ ÇEVİRME: mesaj İngilizceyse resolved_query de İngilizce olur.
+    "how?" (önceki tur iletişimle ilgiliyse) → "How can I reach Yasin?"
+    "peki ya eğitimi" → "Yasin'in eğitimi nedir?"
+
+  KENDİ BAŞINA ANLAŞILIR OLMALI — zamir BIRAKMA. "o", "onun", "bu", "him", "his",
+  "he", "it" gibi sözcükleri gerçek adla değiştir. Geçmişi görmeyen biri okuduğunda
+  soruyu tam anlamalı.
+    YANLIŞ: "How do I reach him?"     DOĞRU: "How can I reach Yasin?"
+    YANLIŞ: "Bunu detaylandır"        DOĞRU: "Yasin'in MegaGear'daki scoring
+                                              botunu detaylandırır mısın?"
+  Bu kritik: zamirli bir soru cevaplayıcıya eksik gidiyor ve model bilgi tabanını
+  aramadan uydurma cevap üretebiliyor.
+
   ASLA cevabı buraya yazma — burası her zaman bir SORU kalır.
 
 kb_query — Aramaya gidecek sorgu. HER ZAMAN TÜRKÇE tam cümle, mesaj İngilizce olsa bile.
+  resolved_query'nin çevirisi değil, ARAMA için yazılmış Türkçe cümledir.
   Tek kelimelik anahtar kelime yazma: "hobiler" değil "Yasin'in hobileri nelerdir?".
   career dışındaki kategorilerde boş string bırak.
 
@@ -217,3 +246,26 @@ async def classify(message: str, history: list[BaseMessage] | None = None) -> Ro
             f"# SINIFLANDIRILACAK YENİ MESAJ\n{message}"
         )),
     ])
+
+
+# Kapsam disi cevaplar. Eskiden bu cumleler SYSTEM_PROMPT'un icinde "tam olarak sunu
+# yaz" talimatiyla duruyordu ve model bazen ikisini karistiriyordu; prompt'ta ayrica
+# "IKI REDDI ASLA KARISTIRMA" diye bir kural tutmak gerekiyordu. Kategori artik bir
+# deger oldugu icin metni kod seciyor, model degil.
+_KAPSAM_CEVAPLARI = {
+    "personal": {
+        "tr": "Üzgünüm, sadece Yasin'in kariyeri hakkındaki sorulara cevap vermek için eğitildim.",
+        "en": "Sorry, I'm only trained to answer questions about Yasin's career.",
+    },
+    "unrelated": {
+        "tr": "Üzgünüm, sadece Yasin hakkındaki soruları cevaplamak için eğitildim.",
+        "en": "Sorry, I'm only trained to answer questions about Yasin.",
+    },
+    "courtesy": _SELAMLAMA_CEVABI,
+}
+
+
+def scope_reply(category: str, lang: str = "tr") -> str:
+    """career DIŞINDAKİ kategoriler için hazır cevap."""
+    metinler = _KAPSAM_CEVAPLARI[category]
+    return metinler.get(lang, metinler["tr"])

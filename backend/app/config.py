@@ -35,20 +35,25 @@ class Settings(BaseSettings):
     RETRIEVER_K: int = 12
     RERANK_TOP_N: int = 8
 
-    # Rerank esigi mutlak degil, dagilima gore belirlenir: cutoff = max(FLOOR, top1*RATIO).
-    # Sabit esik (eski RERANK_MIN_SCORE=0.3) calismiyordu, gerekcesi
-    # retriever.py::_apply_cutoff docstring'inde. Isim bilerek degisti: backend/.env
-    # RERANK_MIN_SCORE=0.3 satirini tasiyor, ayni ismi yeniden anlamlandirsaydik o
-    # deger yeni tabani 0.3'e cakip fallback'i lokalde olu birakirdi. Simdi
-    # extra="ignore" onu sessizce yutuyor.
-    # 0.3 secildi ki iyi bir sorguda (top1~0.99) cutoff ~0.30 cikip kalibre edilmis
-    # eski esikle AYNI yere dussun. 0.4 ile cutoff 0.3998 oluyordu, yani kalibrasyonun
-    # "pozitifler >=0.400" sinirinin tam ustune; kil payi gecen gercek chunk'lar
-    # kesilirdi. 0.3 ile davranis iyi sorgularda eskisiyle ozdes, zayif sorgularda
-    # dagilimla birlikte gevsiyor — yani hicbir yerde eskisinden siki degil.
-    RERANK_REL_RATIO: float = 0.3
-    RERANK_ABS_FLOOR: float = 0.15
-    RERANK_FALLBACK_N: int = 3
+    # Rerank esigi: bu skorun altindaki chunk LLM'e gitmez.
+    #
+    # Isim bilerek RERANK_MIN_SCORE degil: backend/.env o satiri 0.3 ile tasiyor ve
+    # ayni ismi kullanmak eski degeri geri getirirdi (extra="ignore" onu yutuyor).
+    #
+    # 0.40 olculdu, tahmin edilmedi. golden.yaml 30 vaka:
+    #   0.15 / 0.30 -> neg-maas dusuyor: "maas beklentisi" sorusuna Upwork/Scale AI
+    #                  chunk'i 0.3638 ile geciyor, model cevabi alakasiz bilgiyle
+    #                  dolduruyor ("...bilgi yok ama 1600$ kazanc elde etti").
+    #   0.40        -> 30/30. Pozitifler etkilenmiyor, negatifler bos donuyor.
+    # Temmuz kalibrasyonu da ayni yeri gosteriyordu: negatifler <=0.225, pozitifler >=0.400.
+    #
+    # Bir ara bu esik "cutoff = max(taban, top1*oran)" seklinde dagilima gore
+    # hesaplaniyordu. Olcum fikri desteklemedi: taban 0.40 olunca skorlar <=1
+    # oldugu icin oran hicbir zaman baglamiyor — yani olu koddu. Dahasi dayandigi
+    # senaryo (agent'in tool'a ciplak keyword gondermesi) router'dan sonra hic
+    # olusmuyor; kb_query her zaman tam Turkce cumle.
+    RERANK_SCORE_THRESHOLD: float = 0.40
+
     MATCH_THRESHOLD: float = 0.0
 
     CHUNK_SIZE: int = 2000

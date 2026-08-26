@@ -131,15 +131,13 @@ pytest -m "not integration"               # agsiz unit testler
 pytest -m integration                     # golden set, gercek anahtar ister
 ```
 
-Rerank esigi sabit bir sayi degil, dagilima gore hesaplanir:
-`cutoff = max(RERANK_ABS_FLOOR, top1 * RERANK_REL_RATIO)`. Sabit esik calismiyordu
-cunku Cohere skorlari sorgunun bicimine gore uculuyor — ayni chunk "hobiler" icin
-0.09, "Yasin'in hobileri neler?" icin 0.99 donuyor.
+Rerank esigi: `RERANK_SCORE_THRESHOLD` (0.40). Bu skorun altindaki chunk LLM'e
+gitmez ve hicbiri gecemezse arama BOS doner — kapsam disi bir soruya alakasiz chunk
+vermek halusinasyon yuzeyi acar.
 
-Hicbir chunk esigi gecemezse en iyi `RERANK_FALLBACK_N` tanesi yine de doner ve
-`chat_logs.retrieval` izine `fallback_used: true` yazilir; bos donup modelin
-sessizce "bilgim yok" demesindense zayif context tercih edilir.
+Deger olculdu: golden.yaml 30 vakada 0.15 ve 0.30 esiklerinde negatif vakalar
+siziyordu ("maas beklentisi" sorusuna Upwork chunk'i 0.3638 ile geciyor, model cevabi
+alakasiz bilgiyle dolduruyordu), 0.40'ta 30/30.
 
-Ayar: negatif sorular sizarsa `RERANK_REL_RATIO`'yu yukselt, gecerli kismi
-eslesmeler kesiliyorsa dusur. `RERANK_ABS_FLOOR` yalnizca fallback'in ne zaman
-devreye girecegini belirler.
+"Kac aramada 0 chunk dondu" sorusu `chat_logs.retrieval` -> `kept = 0` ile sorgulanir.
+

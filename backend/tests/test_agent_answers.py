@@ -25,13 +25,31 @@ _NO_INFO = "bilgim yok"
 
 
 async def _ask(question: str, history: list | None = None, lang: str = "tr") -> tuple[str, list[dict]]:
-    """Agent'ı /chat route'uyla aynı şekilde çalıştırır; (cevap, trace) döner."""
-    from app.agent import agent_executor
+    """/chat route'unun TAMAMINI çalıştırır; (cevap, trace) döner.
+
+    Router geldikten sonra bu helper agent'ı doğrudan çağırmayı bıraktı: kapsam
+    kararı ve bağlam çözümlemesi artık agent'ta değil router'da. Doğrudan çağırınca
+    testler "reddetmedi" diye düşüyordu — ama kullanıcı o yolu hiç görmüyor.
+    Sıra route ile birebir aynı: nezaket → router → agent.
+    """
+    from app.agent import agent_executor, initial_context
     from app.retriever import retrieval_trace
+    from app.router import classify, courtesy_reply, scope_reply
 
     trace: list[dict] = []
     retrieval_trace.set(trace)
-    result = await agent_executor(lang).ainvoke({"input": question, "history": history or []})
+
+    nazik = courtesy_reply(question, lang)
+    if nazik is not None:
+        return nazik.lower(), trace
+
+    route = await classify(question, history or [])
+    if route.category != "career":
+        return scope_reply(route.category, lang).lower(), trace
+
+    context = await initial_context(route.kb_query)
+    result = await agent_executor(lang).ainvoke(
+        {"input": route.resolved_query, "history": history or [], "context": context})
     return (result.get("output") or "").lower(), trace
 
 

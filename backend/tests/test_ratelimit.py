@@ -134,9 +134,21 @@ async def test_chat_route_limit_asiminda_429_ve_retry_after_doner(monkeypatch):
     from app.routes.chat import chat
     from app.schemas import ChatRequest
 
+    from app.router import Route
+
+    async def sahte_classify(message, history=None):
+        return Route(category="career", resolved_query=message, kb_query=message)
+
     limiter = RateLimiter(per_min=20, per_day=100)
     monkeypatch.setattr("app.routes.chat.get_limiter", lambda: limiter)
     monkeypatch.setattr("app.routes.chat.agent_executor", lambda lang="tr": _SahteAgent())
+    # Router gercek LLM cagirir; bu test hiz limitini olcuyor, siniflandirmayi degil.
+    monkeypatch.setattr("app.routes.chat.classify", sahte_classify)
+
+    async def sahte_context(kb_query):
+        return []
+
+    monkeypatch.setattr("app.routes.chat.initial_context", sahte_context)
 
     kodlar = []
     for i in range(25):

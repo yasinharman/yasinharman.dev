@@ -2,7 +2,7 @@
 import pathlib
 
 from app.agent import SYSTEM_PROMPT, _system_prompt
-from app.guards import LEAK_SIGNALS, output_guard
+from app.guards import _PROMPT_SIGNALS, LEAK_SIGNALS, output_guard
 
 DATA = pathlib.Path(__file__).parents[1] / "data"
 
@@ -41,7 +41,7 @@ def test_gercek_prompt_sizintisi_yakalanir():
         assert output_guard(prompt, lang)[1] == "leak", f"{lang}: tam prompt kaçtı"
         assert output_guard(prompt[: len(prompt) // 2], lang)[1] == "leak", f"{lang}: ilk yarı kaçtı"
 
-    for bolum in ("# KARAR AKIŞI", "## 1. Kapsam Kuralı", "# ROL VE AMAÇ"):
+    for bolum in ("# CEVAP FORMATI", "# POZİSYON UYGUNLUĞU", "# ROL VE AMAÇ"):
         parca = SYSTEM_PROMPT[SYSTEM_PROMPT.index(bolum):][:600]
         assert output_guard(parca)[1] == "leak", f"{bolum!r} bölümü kaçtı"
 
@@ -72,3 +72,14 @@ def test_iteration_limit_kontrolu_mesru_cevabi_bozmaz():
     """Prefix eşleşmesi; "Agent" kelimesi cevabın içinde geçse bile tetiklenmemeli."""
     cevap = "Yasin'in projelerinden biri bir RAG agent'ı; Agent stopped diye bir şey yok."
     assert output_guard(cevap)[1] is None
+
+
+def test_leak_signals_prompt_ile_senkron():
+    """Regresyon: LEAK_SIGNALS promptun bölüm başlıklarını İKİNCİ bir yerde string
+    olarak kopyalıyordu. Bir başlık yeniden adlandırıldığı an guard o sızıntıyı
+    yakalamayı bırakıyor ve hiçbir test bunu görmüyordu. Nitekim liste bayatlamıştı:
+    "Supabase Vector Store1" n8n döneminden kalmaydı, "KARAR AKIŞI" ise router
+    geldikten sonra prompt'tan tamamen kalktı."""
+    tum_prompt = _system_prompt("tr") + _system_prompt("en")
+    olu = [s for s in _PROMPT_SIGNALS if s not in tum_prompt]
+    assert not olu, f"prompt'ta artık geçmeyen sinyaller: {olu}"

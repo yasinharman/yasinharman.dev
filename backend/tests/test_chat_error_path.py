@@ -10,6 +10,7 @@ from starlette.requests import Request
 
 from app import logging_db
 from app.guards import error_user_message
+from app.router import Route
 from app.routes.chat import chat
 from app.schemas import ChatRequest
 
@@ -32,11 +33,23 @@ class _PatlayanAgent:
 def patlayan_agent(monkeypatch):
     monkeypatch.setattr("app.routes.chat.agent_executor", lambda lang="tr": _PatlayanAgent())
 
+    # Router gercek bir LLM cagirir; bu testin konusu siniflandirma degil hata yolu.
+    async def sahte_classify(message, history=None):
+        return Route(category="career", resolved_query=message, kb_query=message)
+
+    monkeypatch.setattr("app.routes.chat.classify", sahte_classify)
+
+    async def sahte_context(kb_query):
+        return []
+
+    monkeypatch.setattr("app.routes.chat.initial_context", sahte_context)
+
 
 async def test_agent_patlayinca_kullanici_nazik_metin_alir(patlayan_agent, monkeypatch):
     kayitlar = []
 
-    async def sahte_log_error(session_id, user_message, exc, latency_ms, retrieval=None):
+    async def sahte_log_error(session_id, user_message, exc, latency_ms,
+                              retrieval=None, route=None):
         kayitlar.append((session_id, user_message, type(exc).__name__, retrieval))
 
     monkeypatch.setattr("app.routes.chat.log_error", sahte_log_error)
@@ -125,11 +138,15 @@ async def test_004_uygulanmadiysa_satir_kaybolmaz(sahte_db):
 
 
 async def test_003_uygulanmadiysa_retrieval_kolonsuz_yazilir(sahte_db):
+    """Kademeli gerileme: tam INSERT (retrieval+route) → retrieval'lı → düz.
+    Migration'lar elle uygulandığı ve push otomatik deploy tetiklediği için kod,
+    her iki migration'ından da önce canlıda olabilir."""
     conn = sahte_db(reddet=asyncpg.exceptions.UndefinedColumnError)
     await logging_db.log_allowed("s1", "soru", "cevap", 50, retrieval=[{"q": "x"}])
 
-    assert len(conn.cagrilar) == 2
+    assert len(conn.cagrilar) == 3, "iki kademeli gerileme çalışmadı"
     assert "retrieval" not in conn.cagrilar[-1][0]
+    assert "route" not in conn.cagrilar[-1][0]
 
 
 async def test_log_yazamamak_istegi_patlatmaz(monkeypatch):

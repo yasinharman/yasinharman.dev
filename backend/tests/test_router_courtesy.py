@@ -88,3 +88,22 @@ def test_sadece_dolgu_kelime_nezaket_sayilmaz(mesaj):
 def test_uzun_mesaj_nezaket_sayilmaz():
     """Altı kelimeden uzunu artık bir cümledir, nezaket mesajı değil."""
     assert courtesy_reply("merhaba selam iyi günler nasılsın naber ne haber", "tr") is None
+
+
+@pytest.mark.parametrize("mesaj", [
+    "how?",           # takip sorusu: "nasil ulasirim?" demek
+    "how",
+    "nasıl?",
+    "ne?",
+])
+def test_tek_kelimelik_takip_sorusu_selamlama_sayilmaz(mesaj):
+    """Regresyon: "how are you"yu desteklemek için how/are/you kelimeleri tek tek
+    selamlama kümesine konmuştu; çıplak "how?" de oraya düşüyordu. Sonuç: takip
+    sorusu olarak "how?" yazan kullanıcı "Hello! What would you like to know about
+    Yasin?" alıyor, gerçek sorusu hiç cevaplanmıyordu."""
+    assert courtesy_reply(mesaj, "en") is None, f"{mesaj!r} selamlama sayıldı"
+
+
+@pytest.mark.parametrize("mesaj", ["how are you", "How are you?", "nasıl gidiyor"])
+def test_cok_kelimeli_selamlama_ifadeleri_tanınır(mesaj):
+    assert courtesy_reply(mesaj, "tr") is not None

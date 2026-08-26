@@ -53,25 +53,36 @@ async def input_guard(message: str) -> GuardVerdict:
 # "projelerinden bahset" gibi tamamen meşru bir soruya verilen doğru cevap
 # sızıntı sanılıp siliniyordu. Sinyaller, prompt'a özgü TALİMAT ifadeleri
 # olmalı — bir proje açıklamasında geçmesi mümkün olmayan cümle parçaları.
-LEAK_SIGNALS = [
-    # Bölüm başlıkları
-    "ARAÇ KULLANIM KURALI", "ROL VE AMAÇ", "TEMEL KURALLAR",
-    "KARAR AKIŞI", "YASAKLAR", "CEVAP FORMATI", "BAĞLAM ÇÖZÜMLEME",
-    "Kapsam Kuralı", "Dürüstlük Kuralı", "Proje Anlatım Kuralı",
-    "Pozisyon Uygunluğu Kuralı", "Kişisel Asistan Tonu",
-    "Supabase Vector Store1",
-    "system prompt", "system message",
-    # Kategori bolumleri: baslik veya govdesi tek basina sizarsa da yakalansin
-    "### A)", "### B)", "### C)",
-    "Tool'u ÇAĞIRMA", "Bu kategoriye giren tipik sorular", "KAPALI bir listedir",
-    # Tool'a dair TALİMAT cümleleri (yalın tool adı bilerek yok)
-    # "tool'unu çağır" tirnakli/tirnaksiz her iki prompt yazimini da yakalar;
-    # korpus ayni tool'dan "tool'unu kullanir" diye bahsettigi icin catismaz.
-    "tool'unu çağır", "portfolio_kb çağrılarak",
-    "portfolio_kb tool'unu kullanıcının", "call portfolio_kb with",
-    # İngilizce dil direktifi bloğu
-    "ANSWER LANGUAGE", "OUTPUT LANGUAGE: ENGLISH", "REMINDER BEFORE YOU ANSWER", "Scope rule B", "Scope rule C",
+# İki liste bilerek ayrı:
+#   _PROMPT_SIGNALS  -> prompt'ta GERÇEKTEN geçen ifadeler. Bir bölüm yeniden
+#                       adlandırılırsa guard sessizce körleşirdi; artık
+#                       test_leak_signals_prompt_ile_senkron bunu yakalıyor.
+#   _GENERIC_SIGNALS -> prompt'a bağlı olmayan, her zaman şüpheli ifadeler.
+#
+# Router geldikten sonra prompt'tan silinen bölümlerin sinyalleri de buradan
+# temizlendi (KARAR AKIŞI, Kapsam Kuralı, "### A)" ... ). Ölü sinyal zararsız
+# görünür ama listeyi okuyan bir sonraki kişiyi yanıltır: guard'ın hâlâ o bölümü
+# koruduğunu sanır.
+_PROMPT_SIGNALS = [
+    # Bolum basliklari
+    "ROL VE AMAÇ", "ARAÇ KULLANIMI", "DÜRÜSTLÜK", "POZİSYON UYGUNLUĞU",
+    "PROJE ANLATIMI", "CEVAP FORMATI", "YASAKLAR", "Biçim Sözleşmesi",
+    # Prompt'a ozgu talimat cumleleri — bir proje aciklamasinda gecmesi mumkun degil
+    "KAPSAM KARARI SANA GELMEDEN ÖNCE VERİLDİ",
+    "BİLGİYİ ERTELEYEN CEVAP YASAK",
+    "GENİŞ SORULARDA ÖZET + DETAY",
+    "transferable skill yaklaşımı",
+    # Tool'a dair TALIMAT cumleleri (yalin tool adi bilerek yok — korpusta geciyor)
+    "tool'unu çağır",
+    # Ingilizce dil direktifi blogu
+    "ANSWER LANGUAGE: ENGLISH",
 ]
+
+_GENERIC_SIGNALS = [
+    "system prompt", "system message",
+]
+
+LEAK_SIGNALS = _PROMPT_SIGNALS + _GENERIC_SIGNALS
 
 _OUTPUT_LEAK_REPLACEMENT = {
     "tr": "Üzgünüm, bu soruyu cevaplayamıyorum.",

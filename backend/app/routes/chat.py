@@ -5,10 +5,10 @@ from ..schemas import ChatRequest, ChatResponse
 from ..config import get_settings
 from ..memory import get_history, append_message
 from ..guards import input_guard, output_guard, blocked_user_message, error_user_message
-from ..agent import agent_executor
+from ..agent import agent_executor, initial_context
 from ..logging_db import log_blocked, log_allowed, log_error
 from ..ratelimit import client_ip, get_limiter
-from ..router import courtesy_reply
+from ..router import classify, courtesy_reply, scope_reply
 from ..retriever import retrieval_trace
 
 log = structlog.get_logger()
@@ -42,6 +42,8 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
         await log_blocked(req.session_id, req.message, in_verdict.reason or in_verdict.category, latency)
         return ChatResponse(response=blocked_user_message(req.lang), blocked=True)
 
+    history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
+
     # ADIM 5.5: Selamlama/teşekkür — LLM'e hiç gitmeden hazır cevap.
     # Sabit bir kelime kümesi için model çağırmak hem para hem gecikme, üstelik
     # güvenilir de değildi: temiz bir oturumda "merhaba" yazan ziyaretçi
@@ -51,13 +53,34 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
         await append_message(req.session_id, "user", req.message)
         await append_message(req.session_id, "assistant", nazik)
         latency = int((time.monotonic() - t0) * 1000)
-        await log_allowed(req.session_id, req.message, nazik, latency, reason="courtesy")
+        await log_allowed(req.session_id, req.message, nazik, latency, reason="courtesy",
+                          route={"category": "courtesy", "resolved_query": req.message,
+                                 "kb_query": ""})
         log.info("chat", session_id=req.session_id, lang=req.lang, latency_ms=latency,
                  sanitize="courtesy", kb_calls=0)
         return ChatResponse(response=nazik, blocked=False)
 
-    # ADIM 6: History ile birlikte agent'ı çağır — agent system prompt + history + input ile LLM'i çalıştırır, gerektikçe portfolio_kb tool'unu kullanarak (max 4 iterasyon) final cevabı üretir.
-    history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
+    # ADIM 5.7: Router — kapsam kararı ve bağlam çözümlemesi. Eskiden ikisi de
+    # 250 satırlık SYSTEM_PROMPT'un içinde örtük veriliyordu; artık üç açık değer:
+    # category / resolved_query / kb_query. Loglanabiliyor, ölçülebiliyor.
+    route = await classify(req.message, history)
+    route_log = route.model_dump()
+
+    # career DIŞINDA retrieval de ana LLM çağrısı da HİÇ yapılmaz. Eskiden reddedilen
+    # her soru, 250 satırlık prompt + tool tanımı yükleyen tam bir agent turu harcıyordu.
+    if route.category != "career":
+        metin = scope_reply(route.category, req.lang)
+        await append_message(req.session_id, "user", req.message)
+        await append_message(req.session_id, "assistant", metin)
+        latency = int((time.monotonic() - t0) * 1000)
+        await log_allowed(req.session_id, req.message, metin, latency,
+                          reason=f"scope:{route.category}", route=route_log)
+        log.info("chat", session_id=req.session_id, lang=req.lang, latency_ms=latency,
+                 category=route.category, kb_calls=0)
+        return ChatResponse(response=metin, blocked=False)
+
+    # ADIM 6: Agent'ı çağır. Girdi ham mesaj değil router'ın çözdüğü TAM soru:
+    # "peki ya eğitimi" gibi eksik takip soruları buraya tamamlanmış olarak gelir.
     trace: list[dict] = []
     retrieval_trace.set(trace)
     # ADIM 6b: Agent patlarsa (OpenAI 429/500, Cohere timeout, Supabase kopması) istek
@@ -65,10 +88,15 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     # istekleri logluyorduk, prod hata oranı tamamen görünmezdi. Artık hata satır
     # olarak düşüyor ve kullanıcı ham stack trace yerine nazik bir metin görüyor.
     try:
-        result = await agent_executor(req.lang).ainvoke({"input": req.message, "history": history})
+        # Ilk retrieval KOD tarafinda: agent'in tool'u cagiracagina guvenmiyoruz
+        # (bkz. agent.initial_context — uydurma iletisim bilgisi vakasi).
+        context = await initial_context(route.kb_query)
+        result = await agent_executor(req.lang).ainvoke(
+            {"input": route.resolved_query, "history": history, "context": context})
     except Exception as exc:
         latency = int((time.monotonic() - t0) * 1000)
-        await log_error(req.session_id, req.message, exc, latency, retrieval=trace or None)
+        await log_error(req.session_id, req.message, exc, latency,
+                        retrieval=trace or None, route=route_log)
         log.exception("chat_failed", session_id=req.session_id, lang=req.lang,
                       latency_ms=latency, kb_calls=len(trace))
         # append_message bilerek çağrılmıyor: yarım kalan tur geçmişe yazılırsa bir
@@ -86,9 +114,9 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     latency = int((time.monotonic() - t0) * 1000)
     await log_allowed(
         req.session_id, req.message, final_answer, latency,
-        reason=sanitize_reason, retrieval=trace or None,
+        reason=sanitize_reason, retrieval=trace or None, route=route_log,
     )
 
     log.info("chat", session_id=req.session_id, lang=req.lang, latency_ms=latency,
-             sanitize=sanitize_reason, kb_calls=len(trace))
+             category="career", sanitize=sanitize_reason, kb_calls=len(trace))
     return ChatResponse(response=final_answer, blocked=False)

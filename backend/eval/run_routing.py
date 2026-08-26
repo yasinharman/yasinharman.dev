@@ -2,13 +2,12 @@
 
 İKİ MOD:
 
-  baseline (bugün)  Ortada router yok; sınıflandırma 250 satırlık SYSTEM_PROMPT'un
-                    içinde ve dışarı hiçbir değer vermiyor. O yüzden kategoriyi
-                    DAVRANIŞTAN çıkarıyoruz: agent tool'u çağırdı mı, cevap sabit
-                    ret metni mi. Kaba ama bugünün tek ölçüm yolu.
+  uçtan uca (varsayılan)  /chat'in TAM sırası: nezaket → router → agent. career
+                    yolunda agent'ın gerçekten arama yapıp yapmadığını da ölçer,
+                    yani "router doğru dedi ama agent yine reddetti" durumunu yakalar.
 
-  router (FAZ 3.1)  Router açık bir `category` döndürünce bu dosya tek assert'e iner
-                    ve LLM'in cevap üretmesine hiç gerek kalmaz.
+  --router          Yalnızca sınıflandırma; agent hiç çalışmaz. Ucuz ve hızlı,
+                    router prompt'unu iterasyonla ayarlarken bu kullanılır.
 
 Neyi ölçüyor: `career` sorularının kaçında GERÇEKTEN arama yapıldığını. Kritik olan
 bu, çünkü canlı loglar aramadan verilen "bilgim yok"/"eğitildim" cevaplarının
@@ -70,11 +69,11 @@ def _degerlendir(expect: str, aradi: bool, reddetti: bool) -> tuple[bool, str]:
 
 
 async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
-    from app.agent import agent_executor
+    """Uctan uca: /chat route'unun AYNI sirasini izler — nezaket, router, agent."""
+    from app.agent import agent_executor, initial_context
     from app.retriever import retrieval_trace
-    from app.router import courtesy_reply
+    from app.router import classify, courtesy_reply
 
-    # /chat route'uyla AYNI sıra: deterministik nezaket kontrolü LLM'den önce gelir.
     nazik = courtesy_reply(case["question"], "tr")
     if nazik is not None:
         gecti, gozlem = _degerlendir(case["expect"], aradi=False, reddetti=False)
@@ -82,11 +81,26 @@ async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
                 "aradi": False, "cevap": nazik[:150], "sorgular": []}
 
     async with sem:
+        try:
+            route = await classify(case["question"], _history(case))
+        except Exception as exc:  # noqa: BLE001
+            return {**case, "gecti": False, "gozlem": f"router: {type(exc).__name__}: {exc}",
+                    "aradi": False, "cevap": "", "sorgular": []}
+
+    # career DISINDA agent hic calismaz: sabit cevap doner, retrieval yapilmaz.
+    if route.category != "career":
+        gecti, gozlem = _degerlendir(case["expect"], aradi=False, reddetti=True)
+        return {**case, "gecti": gecti, "gozlem": f"{gozlem} → {route.category}",
+                "aradi": False, "cevap": "", "sorgular": []}
+
+    case = {**case, "question": route.resolved_query}
+    async with sem:
         trace: list[dict] = []
         retrieval_trace.set(trace)
         try:
+            context = await initial_context(route.kb_query)
             result = await agent_executor("tr").ainvoke(
-                {"input": case["question"], "history": _history(case)}
+                {"input": case["question"], "history": _history(case), "context": context}
             )
             cevap = (result.get("output") or "").lower()
             hata = None

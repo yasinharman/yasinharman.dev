@@ -76,6 +76,20 @@ cases:
   - id: hobiler-3
     question: hobiler
     expect: career
+  - id: yas-1
+    question: Yasin kaç yaşında?
+    expect: career
+  - id: yas-2
+    question: Yasin'in yaşı kaç?
+    expect: career
+    regression: true
+    note: >
+      Router bunu personal'a atıyordu ("fiziksel özellik" sanıyor) ama "Yasin kaç
+      yaşında" doğru çıkıyordu — aynı bilgi, iki yazım, iki sonuç. Eski SYSTEM_PROMPT
+      da yaşın B'ye kaydığını not etmişti; ilk eval setimde yaş vakası hiç yoktu.
+  - id: sehir-1
+    question: Yasin nerede yaşıyor?
+    expect: career
   - id: deneyim-sure
     question: kaç yıldır çalışıyor
     expect: career
@@ -113,6 +127,28 @@ cases:
   - id: takip-scoring
     question: Customer/Product Scoring Engine botunu açıkla
     expect: career
+  - id: takip-iletisim-en-zamirli
+    question: how do I reach him?
+    expect: career
+    regression: true
+    note: >
+      Zamirli takip sorusu. Router "How do I reach him?" diye çözünce cevaplayıcı
+      soruyu eksik alıyor, tool'u HİÇ çağırmadan UYDURUYORDU: sahte bir e-posta
+      (yasin.harman@example.com) ve yanlış LinkedIn kullanıcı adı üretti. Aynı
+      geçmişle "how?" doğru çözülüp (Yasin adı geçiyor) doğru cevaplanıyordu.
+    history:
+      - role: user
+        content: What are Yasin's salary expectations?
+      - role: assistant
+        content: I don't have information on that. You can get in touch with Yasin.
+  - id: takip-iletisim-en-kisa
+    question: how?
+    expect: career
+    history:
+      - role: user
+        content: What are Yasin's salary expectations?
+      - role: assistant
+        content: I don't have information on that. You can get in touch with Yasin.
   - id: takip-iletisim
     question: nasıl geçicem?
     expect: career
