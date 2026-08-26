@@ -26,6 +26,12 @@ from .config import Settings, get_settings
 from .deps import supabase_client, embeddings
 from .retry import external_retry
 
+# Bilgi tabaninin kok dizini. /admin/ingest-path yalnizca bunun altini kabul eder
+# (bkz. routes/admin.py::_resolve_data_path); ingest_path'in kendisi kisitsiz kalir
+# cunku /admin/ingest yuklenen dosyayi tempfile yoluyla, CLI ise operatorun verdigi
+# herhangi bir yolu mesru sekilde kullanir.
+DATA_ROOT = Path(__file__).resolve().parents[1] / "data"
+
 _MD_EXTS = {".md", ".markdown"}
 _SUPPORTED_EXTS = {".pdf", ".docx", ".txt", ".html", ".htm"} | _MD_EXTS
 

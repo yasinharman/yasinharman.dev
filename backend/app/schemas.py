@@ -17,6 +17,8 @@ class ChatResponse(BaseModel):
 
 
 class IngestPathRequest(BaseModel):
+    # Yalnizca backend/data/ altindaki yollar kabul edilir (routes/admin.py).
+    # wipe alani bilerek YOK: tum korpusu silmek yalnizca CLI'dan yapilabilir
+    # (python -m app.ingest ... --wipe), yani sunucu erisimi gerektirir.
     path: str
     source: str | None = None
-    wipe: bool = False

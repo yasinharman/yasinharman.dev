@@ -1,9 +1,10 @@
 import os
 import tempfile
+from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.security import APIKeyHeader
 from ..config import get_settings
-from ..ingest import ingest_path
+from ..ingest import DATA_ROOT, ingest_path
 from ..schemas import IngestPathRequest
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -34,7 +35,28 @@ async def ingest_upload(
     return {"chunks": n, "filename": file.filename}
 
 
+def _resolve_data_path(raw: str) -> Path:
+    """Yolu backend/data/ altina hapseder.
+
+    Onceden body.path dogrudan Path()'e gidiyordu: sizmis bir admin key,
+    sunucudaki her .md/.txt/.pdf/.docx'i vektor DB'ye yazip chatbot uzerinden
+    okutabilirdi — yani key sizintisini bir dosya okuma primitifine cevirirdi.
+
+    .resolve() her iki tarafta cagriliyor; boylece ../ ve symlink kacislari da kapanir.
+    """
+    try:
+        target = Path(raw).expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail="invalid path") from exc
+    if not target.is_relative_to(DATA_ROOT.resolve()):
+        raise HTTPException(status_code=400, detail="path must be under backend/data/")
+    return target
+
+
 @router.post("/ingest-path", dependencies=[Depends(_require_admin)])
 async def ingest_by_path(body: IngestPathRequest) -> dict:
-    n = await ingest_path(body.path, source_label=body.source, wipe=body.wipe)
-    return {"chunks": n, "path": body.path}
+    target = _resolve_data_path(body.path)
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="path not found")
+    n = await ingest_path(str(target), source_label=body.source)
+    return {"chunks": n, "path": str(target)}
