@@ -83,6 +83,20 @@ _OUTPUT_EMPTY_REPLACEMENT = {
 }
 OUTPUT_MAX_LEN = 3000
 
+# LangChain, AgentExecutor iterasyon limitine carpinca cevap yerine sabit bir
+# Ingilizce metin dondurur (langchain/agents/agent.py:967 ve :311 — iki farkli
+# metin, ortak prefix bu). Metin output_guard'in uc kontrolunden de geciyordu:
+# leak sinyali degil, 3000 karakterden kisa, bos degil. Sonuc: kullanicinin
+# ekraninda Ingilizce bir LangChain hata mesaji.
+#
+# startswith kullaniliyor cunku LangChain bu metni cevabin TAMAMI olarak
+# donduruyor; substring aramasi mesru bir cevabin icinde yanlis pozitif uretebilirdi.
+#
+# Bu bir yara bandi: dogru cozum limite carpildiginda eldeki chunk'larla bir
+# synthesis cagrisi yapmak, o da kendi graph'imizi kurmayi gerektiriyor
+# (bkz. notes/yapilacaklar.md FAZ 3.4).
+_AGENT_STOPPED_PREFIX = "Agent stopped due to"
+
 # Geriye donuk uyumluluk: dil parametresi verilmeyen cagrilar Turkce alir.
 OUTPUT_LEAK_REPLACEMENT = _OUTPUT_LEAK_REPLACEMENT["tr"]
 OUTPUT_EMPTY_REPLACEMENT = _OUTPUT_EMPTY_REPLACEMENT["tr"]
@@ -91,6 +105,9 @@ OUTPUT_EMPTY_REPLACEMENT = _OUTPUT_EMPTY_REPLACEMENT["tr"]
 def output_guard(answer: str, lang: str = "tr") -> tuple[str, str | None]:
     """Return (sanitized_text, reason_if_modified)."""
     text = answer or ""
+
+    if text.strip().startswith(_AGENT_STOPPED_PREFIX):
+        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT), "iteration_limit"
 
     if any(s in text for s in LEAK_SIGNALS):
         return _OUTPUT_LEAK_REPLACEMENT.get(lang, OUTPUT_LEAK_REPLACEMENT), "leak"
@@ -120,3 +137,12 @@ BLOCKED_USER_MESSAGE = _BLOCKED_USER_MESSAGE["tr"]
 
 def blocked_user_message(lang: str = "tr") -> str:
     return _BLOCKED_USER_MESSAGE.get(lang, BLOCKED_USER_MESSAGE)
+
+
+def error_user_message(lang: str = "tr") -> str:
+    """Agent/altyapı patladığında kullanıcıya gösterilen metin.
+
+    Bilerek output_guard'ın "boş cevap" metniyle aynı: kullanıcı açısından ikisi de
+    "şu an cevap üretemedik" durumu, ayırt etmesi gereken bir fark yok.
+    """
+    return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT)

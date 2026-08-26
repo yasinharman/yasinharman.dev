@@ -50,3 +50,25 @@ def test_turkce_yola_dil_katmani_eklenmez():
     """TR prompt = SYSTEM_PROMPT; İngilizce mod Türkçe davranışa hiçbir şey eklemez."""
     assert _system_prompt("tr") == SYSTEM_PROMPT
     assert _system_prompt("en") != SYSTEM_PROMPT
+
+
+def test_iteration_limit_mesaji_kullaniciya_gitmez():
+    """Regresyon: AgentExecutor limite çarpınca LangChain sabit bir İngilizce metin
+    döndürüyor ve bu metin output_guard'ın üç kontrolünden de geçiyordu (leak değil,
+    3000 karakterden kısa, boş değil). Kullanıcı cevap yerine "Agent stopped due to
+    iteration limit or time limit." görüyordu."""
+    langchain_metinleri = [
+        "Agent stopped due to iteration limit or time limit.",  # agent.py:967
+        "Agent stopped due to max iterations.",                 # agent.py:311
+    ]
+    for metin in langchain_metinleri:
+        for lang in ("tr", "en"):
+            temiz, reason = output_guard(metin, lang)
+            assert reason == "iteration_limit", f"{metin!r} ({lang}) yakalanmadı"
+            assert metin not in temiz, f"{lang}: ham LangChain metni cevapta kaldı"
+
+
+def test_iteration_limit_kontrolu_mesru_cevabi_bozmaz():
+    """Prefix eşleşmesi; "Agent" kelimesi cevabın içinde geçse bile tetiklenmemeli."""
+    cevap = "Yasin'in projelerinden biri bir RAG agent'ı; Agent stopped diye bir şey yok."
+    assert output_guard(cevap)[1] is None

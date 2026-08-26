@@ -61,8 +61,10 @@ export function HomePage() {
 
       setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: aiText }]);
     } catch (error) {
-      console.error('[chat] webhook error:', error);
-      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: `${t.chat.errorPrefix}: ${error.message}` }]);
+      // Ham error.message ekrana basiliyordu ("Webhook HTTP 500" gibi). Kullaniciya
+      // sabit metin, gelistiriciye console: hata detayi arayuzde ise yaramiyor.
+      console.error('[chat] request failed:', error);
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: t.chat.errorMessage }]);
     } finally {
       setIsTyping(false);
     }

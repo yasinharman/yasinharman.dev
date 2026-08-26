@@ -31,13 +31,27 @@ class Settings(BaseSettings):
     HISTORY_LIMIT: int = 10
     RETRIEVER_K: int = 12
     RERANK_TOP_N: int = 8
-    RERANK_MIN_SCORE: float = 0.3
+
+    # Rerank esigi mutlak degil, dagilima gore belirlenir: cutoff = max(FLOOR, top1*RATIO).
+    # Sabit esik (eski RERANK_MIN_SCORE=0.3) calismiyordu, gerekcesi
+    # retriever.py::_apply_cutoff docstring'inde. Isim bilerek degisti: backend/.env
+    # RERANK_MIN_SCORE=0.3 satirini tasiyor, ayni ismi yeniden anlamlandirsaydik o
+    # deger yeni tabani 0.3'e cakip fallback'i lokalde olu birakirdi. Simdi
+    # extra="ignore" onu sessizce yutuyor.
+    RERANK_REL_RATIO: float = 0.4
+    RERANK_ABS_FLOOR: float = 0.15
+    RERANK_FALLBACK_N: int = 3
     MATCH_THRESHOLD: float = 0.0
 
     CHUNK_SIZE: int = 2000
     CHUNK_OVERLAP: int = 150
 
     MAX_INPUT_LENGTH: int = 1000
+
+    # /chat auth'suz ve halka acik. MAX_INPUT_LENGTH mesaj boyutunu sinirliyor ama
+    # istek SAYISINI degil; her istek 2-5 OpenAI + 2-5 Cohere cagrisi demek.
+    RATE_LIMIT_PER_MIN: int = 20    # IP basina
+    RATE_LIMIT_PER_DAY: int = 100   # session_id basina
 
     ADMIN_API_KEY: str
 

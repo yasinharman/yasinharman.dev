@@ -23,6 +23,8 @@ Tarayici
    ▼
 FastAPI  (backend/app/routes/chat.py)
    │
+   ├─ rate limit         app/ratelimit.py   20/dk IP, 100/gun session -> 429
+   │
    ├─ input_guard        app/guards.py      politika disi soruyu reddeder
    │
    ├─ memory             app/memory.py      chat_messages'tan son N mesaj
@@ -32,11 +34,11 @@ FastAPI  (backend/app/routes/chat.py)
    │     └─ tool: portfolio_kb
    │          └─ retriever  app/retriever.py
    │               ├─ Supabase match_documents RPC  (vector arama)
-   │               └─ Cohere Rerank                 (RERANK_MIN_SCORE filtresi)
+   │               └─ Cohere Rerank                 (dagilima gore esik, asagi bak)
    │
    ├─ output_guard       app/guards.py      politika disi yaniti filtreler
    │
-   └─ chat_logs          app/logging_db.py  allowed/blocked her istegi loglar
+   └─ chat_logs          app/logging_db.py  allowed/blocked/error her istegi loglar
                                             (retrieval izi jsonb olarak)
    │
    ▼
@@ -91,6 +93,10 @@ curl -X POST https://api.yasinharman.dev/admin/ingest-path \
   -d '{"path":"data"}'
 ```
 
+Endpoint yalnizca `backend/data/` altindaki yollari kabul eder (400 disinda). Tum
+korpusu silen `--wipe` HTTP'de YOK, sadece CLI'da: sizmis bir admin key tek istekle
+vektor store'u silememeli.
+
 **Korpus degistiginde ingest calistirilmazsa Jarvis eski bilgiyi anlatmaya
 devam eder.** `data/*.md` commit'lemek tek basina yeterli degildir.
 
@@ -125,5 +131,15 @@ pytest -m "not integration"               # agsiz unit testler
 pytest -m integration                     # golden set, gercek anahtar ister
 ```
 
-`RERANK_MIN_SCORE` ayari: negatif sorular sizarsa yukselt (~0.3), gecerli kismi
-eslesmeler kesiliyorsa dusur (~0.15).
+Rerank esigi sabit bir sayi degil, dagilima gore hesaplanir:
+`cutoff = max(RERANK_ABS_FLOOR, top1 * RERANK_REL_RATIO)`. Sabit esik calismiyordu
+cunku Cohere skorlari sorgunun bicimine gore uculuyor — ayni chunk "hobiler" icin
+0.09, "Yasin'in hobileri neler?" icin 0.99 donuyor.
+
+Hicbir chunk esigi gecemezse en iyi `RERANK_FALLBACK_N` tanesi yine de doner ve
+`chat_logs.retrieval` izine `fallback_used: true` yazilir; bos donup modelin
+sessizce "bilgim yok" demesindense zayif context tercih edilir.
+
+Ayar: negatif sorular sizarsa `RERANK_REL_RATIO`'yu yukselt, gecerli kismi
+eslesmeler kesiliyorsa dusur. `RERANK_ABS_FLOOR` yalnizca fallback'in ne zaman
+devreye girecegini belirler.
