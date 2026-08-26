@@ -42,7 +42,6 @@ Yasin ile iletişim kurmak, Yasin'e ulaşmak veya onunla iletişime geçmek iste
 aşağıdaki kanalları kullanabilir:
 
 - E-posta: contact@yasinharman.dev
-- Telefon: 0532 173 64 07
 - Kişisel web sitesi: yasinharman.dev
 - LinkedIn: linkedin.com/in/yasin-harman
 - GitHub: github.com/yasinharman

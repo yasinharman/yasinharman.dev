@@ -114,7 +114,7 @@ async def test_baglam_takip_sorusu_iletisim_bilgisi_verir():
     answer, trace = await _ask("nasıl geçicem?", history=history)
     assert "eğitildim" not in answer, (
         f"bağlama bağlı takip sorusu yanlışlıkla kapsam-dışı reddedildi: {answer!r}")
-    assert any(s in answer for s in ["contact@yasinharman.dev", "linkedin", "upwork", "0532"]), (
+    assert any(s in answer for s in ["contact@yasinharman.dev", "linkedin", "upwork"]), (
         f"iletişim bilgisi cevaba girmedi: {answer!r}")
 
 
@@ -207,5 +207,5 @@ async def test_ingilizce_eliptik_iletisim_sorusu(takip):
     cevap iletişim bilgisi yerine dil becerisi anlatıyordu."""
     answer, trace = await _iki_tur("What are Yasin's salary expectations?", "en", takip, "en")
     assert trace, f"{takip!r} sorusunda portfolio_kb çağrılmadı"
-    assert any(k in answer for k in ("contact@yasinharman.dev", "0532", "linkedin")), (
+    assert any(k in answer for k in ("contact@yasinharman.dev", "linkedin")), (
         f"iletişim bilgisi cevaba girmedi: {answer!r}")
