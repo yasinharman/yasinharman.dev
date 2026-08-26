@@ -1,12 +1,13 @@
 import time
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 from ..schemas import ChatRequest, ChatResponse
 from ..config import get_settings
 from ..memory import get_history, append_message
 from ..guards import input_guard, output_guard, blocked_user_message, error_user_message
 from ..agent import agent_executor
 from ..logging_db import log_blocked, log_allowed, log_error
+from ..ratelimit import client_ip, get_limiter
 from ..retriever import retrieval_trace
 
 log = structlog.get_logger()
@@ -14,9 +15,24 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest) -> ChatResponse:
+async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     settings = get_settings()
     t0 = time.monotonic()
+
+    # ADIM 3.5: Rate limit — en ucuz kontrol, en basta. Guard'lardan da once calisir
+    # ki bir flood, input_guard'i bile mesgul etmeden geri cevrilsin.
+    rate = get_limiter().check(client_ip(request), req.session_id)
+    if not rate.allowed:
+        latency = int((time.monotonic() - t0) * 1000)
+        log.warning("rate_limited", session_id=req.session_id, reason=rate.reason,
+                    retry_after=rate.retry_after)
+        if rate.should_log:
+            await log_blocked(req.session_id, req.message, rate.reason, latency)
+        raise HTTPException(
+            status_code=429,
+            detail="too many requests",
+            headers={"Retry-After": str(rate.retry_after)},
+        )
 
     # ADIM 4: Input guard — mesajı agent'a/DB'ye geçirmeden önce kötü niyetli/yasaklı içerik için tara; bloklanırsa ayrı log'a yaz ve sabit cevap dön.
     in_verdict = await input_guard(req.message)

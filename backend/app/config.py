@@ -39,6 +39,11 @@ class Settings(BaseSettings):
 
     MAX_INPUT_LENGTH: int = 1000
 
+    # /chat auth'suz ve halka acik. MAX_INPUT_LENGTH mesaj boyutunu sinirliyor ama
+    # istek SAYISINI degil; her istek 2-5 OpenAI + 2-5 Cohere cagrisi demek.
+    RATE_LIMIT_PER_MIN: int = 20    # IP basina
+    RATE_LIMIT_PER_DAY: int = 100   # session_id basina
+
     ADMIN_API_KEY: str
 
     ALLOWED_ORIGINS: str = "http://localhost:5173"

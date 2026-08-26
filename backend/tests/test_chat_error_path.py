@@ -6,6 +6,7 @@ başarılı istekleri logluyorduk; prod hata oranı tamamen görünmezdi.
 """
 import asyncpg
 import pytest
+from starlette.requests import Request
 
 from app import logging_db
 from app.guards import error_user_message
@@ -15,6 +16,11 @@ from app.schemas import ChatRequest
 
 async def _yut(*_a, **_kw):
     return None
+
+
+def _istek(ip: str = "203.0.113.7") -> Request:
+    return Request({"type": "http", "method": "POST", "path": "/chat",
+                    "headers": [], "client": (ip, 12345)})
 
 
 class _PatlayanAgent:
@@ -35,7 +41,7 @@ async def test_agent_patlayinca_kullanici_nazik_metin_alir(patlayan_agent, monke
 
     monkeypatch.setattr("app.routes.chat.log_error", sahte_log_error)
 
-    resp = await chat(ChatRequest(message="Yasin kaç yaşında?", session_id="s-hata"))
+    resp = await chat(ChatRequest(message="Yasin kaç yaşında?", session_id="s-hata"), _istek())
 
     assert resp.response == error_user_message("tr")
     assert resp.blocked is False, "hata bir guard bloğu değil, blocked işaretlenmemeli"
@@ -44,7 +50,8 @@ async def test_agent_patlayinca_kullanici_nazik_metin_alir(patlayan_agent, monke
 
 async def test_ingilizce_hata_metni_ingilizce_doner(patlayan_agent, monkeypatch):
     monkeypatch.setattr("app.routes.chat.log_error", _yut)
-    resp = await chat(ChatRequest(message="How old is Yasin?", session_id="s-hata-en", lang="en"))
+    resp = await chat(ChatRequest(message="How old is Yasin?", session_id="s-hata-en", lang="en"),
+                       _istek())
     assert resp.response == error_user_message("en")
 
 
