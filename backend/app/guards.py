@@ -137,3 +137,12 @@ BLOCKED_USER_MESSAGE = _BLOCKED_USER_MESSAGE["tr"]
 
 def blocked_user_message(lang: str = "tr") -> str:
     return _BLOCKED_USER_MESSAGE.get(lang, BLOCKED_USER_MESSAGE)
+
+
+def error_user_message(lang: str = "tr") -> str:
+    """Agent/altyapı patladığında kullanıcıya gösterilen metin.
+
+    Bilerek output_guard'ın "boş cevap" metniyle aynı: kullanıcı açısından ikisi de
+    "şu an cevap üretemedik" durumu, ayırt etmesi gereken bir fark yok.
+    """
+    return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT)

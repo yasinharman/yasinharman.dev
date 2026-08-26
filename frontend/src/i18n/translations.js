@@ -48,7 +48,9 @@ export const translations = {
       assistantRole: 'YasinHarman için Yapay Zeka Asistanı',
       inputPlaceholder: 'Başka bir soru sorun...',
       footer: 'Jarvis, bilgiyi sentezlemek için FastAPI + LangChain kullanır',
-      errorPrefix: 'Hata',
+      // Backend hata yolunda aynı cümleyi döndürür; kullanıcı için ikisi de
+      // "şu an cevap üretemedik" durumu. Ham hata detayı console'da kalır.
+      errorMessage: 'Üzgünüm, şu an cevap üretemiyorum. Lütfen tekrar deneyin.',
     },
 
     experience: {
@@ -104,7 +106,7 @@ export const translations = {
       assistantRole: 'AI Assistant for YasinHarman',
       inputPlaceholder: 'Ask another question...',
       footer: 'Jarvis uses FastAPI + LangChain to synthesise information',
-      errorPrefix: 'Error',
+      errorMessage: "Sorry, I can't produce an answer right now. Please try again.",
     },
 
     experience: {

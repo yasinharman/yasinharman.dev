@@ -4,9 +4,9 @@ from fastapi import APIRouter
 from ..schemas import ChatRequest, ChatResponse
 from ..config import get_settings
 from ..memory import get_history, append_message
-from ..guards import input_guard, output_guard, blocked_user_message
+from ..guards import input_guard, output_guard, blocked_user_message, error_user_message
 from ..agent import agent_executor
-from ..logging_db import log_blocked, log_allowed
+from ..logging_db import log_blocked, log_allowed, log_error
 from ..retriever import retrieval_trace
 
 log = structlog.get_logger()
@@ -29,7 +29,21 @@ async def chat(req: ChatRequest) -> ChatResponse:
     history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
     trace: list[dict] = []
     retrieval_trace.set(trace)
-    result = await agent_executor(req.lang).ainvoke({"input": req.message, "history": history})
+    # ADIM 6b: Agent patlarsa (OpenAI 429/500, Cohere timeout, Supabase kopması) istek
+    # 500 ile bitip chat_logs'a HİÇBİR satır yazılmıyordu — yani yalnızca başarılı
+    # istekleri logluyorduk, prod hata oranı tamamen görünmezdi. Artık hata satır
+    # olarak düşüyor ve kullanıcı ham stack trace yerine nazik bir metin görüyor.
+    try:
+        result = await agent_executor(req.lang).ainvoke({"input": req.message, "history": history})
+    except Exception as exc:
+        latency = int((time.monotonic() - t0) * 1000)
+        await log_error(req.session_id, req.message, exc, latency, retrieval=trace or None)
+        log.exception("chat_failed", session_id=req.session_id, lang=req.lang,
+                      latency_ms=latency, kb_calls=len(trace))
+        # append_message bilerek çağrılmıyor: yarım kalan tur geçmişe yazılırsa bir
+        # sonraki soruda model cevapsız bir kullanıcı mesajı görür.
+        return ChatResponse(response=error_user_message(req.lang), blocked=False)
+
     raw_answer = result.get("output") or ""
 
     # ADIM 7: Output guard — agent cevabını üç kurala karşı tara (system prompt sızıntısı / >3000 char / boş); gerekirse yerine sabit metin koy. reason audit log için.
