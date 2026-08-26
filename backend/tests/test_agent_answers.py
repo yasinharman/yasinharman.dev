@@ -227,3 +227,28 @@ async def test_ingilizce_eliptik_iletisim_sorusu(takip):
     assert trace, f"{takip!r} sorusunda portfolio_kb çağrılmadı"
     assert any(k in answer for k in ("contact@yasinharman.dev", "linkedin")), (
         f"iletişim bilgisi cevaba girmedi: {answer!r}")
+
+
+@pytest.mark.parametrize("soru", [
+    "Business Data Finder nedir",
+    "Internship Tracker nedir",
+    "Jarvis projesi nedir",
+])
+async def test_proje_cevabinda_is_deneyimi_rozeti_olmaz(soru):
+    """Projelerin çalışma tipi yoktur; cevapta iş deneyimi rozeti çıkmamalı.
+
+    Kontrol ROZET ŞEKLİ üzerinden: arayüz (MessageBody.jsx) bir parantezli satırı
+    ancak ayraç, tarih veya bilinen bir çalışma tipi içeriyorsa rozet olarak çizer.
+    Model ara sıra "( Proje )" gibi içi boş bir satır yazıyor — prompt kuralı bunu
+    azaltıyor ama garanti etmiyor; garanti arayüz tarafında, o satır düz metne
+    düşüyor. Burada test edilen şey de o: YANLIŞ ROZET yok."""
+    import re
+    ROZET_RE = re.compile(r"^\s*\((.+)\)\s*$")
+    ANLAMLI_RE = re.compile(
+        r"[·|;,]|\d|^\s*(tam zamanlı|yarı zamanlı|freelance|staj|full[- ]time|"
+        r"part[- ]time|internship|remote|uzaktan)\s*$", re.IGNORECASE)
+
+    answer, _ = await _ask(soru)
+    rozetler = [m.group(1) for ln in answer.splitlines()
+                if (m := ROZET_RE.match(ln)) and ANLAMLI_RE.search(m.group(1))]
+    assert not rozetler, f"proje cevabında iş deneyimi rozeti var: {rozetler}"

@@ -122,11 +122,12 @@ render eder. Bu işaretlemeyi HARFİYEN kullan:
 
 - BAŞLIK (şirket, proje veya bölüm adı) satırı `### ` ile başlar. Başlıkta `**`
   KULLANMA ve tek satırda bitir. Örn: `### MegaGear — Software Engineer`
-- ETİKET satırı YALNIZCA iş deneyimi başlıkları için kullanılır: başlığın HEMEN
-  altında, parantez içinde, aralarına ` · ` koyarak. En fazla 3-4 kelime.
+- ETİKET satırı YALNIZCA ŞİRKET/KURUM başlıkları için: başlığın HEMEN altında,
+  parantez içinde, aralarına ` · ` koyarak, en fazla 3-4 kelime.
   Örn: `( Tam Zamanlı · Mayıs 2026 – Temmuz 2026 )`
-- KİŞİSEL PROJELERDE ETİKET SATIRI YAZMA. Projelerin çalışma tipi yoktur; "Tam
-  Zamanlı", "Devam Ediyor" gibi ibareler projeler için anlamsızdır.
+- PROJE başlığının altına parantezli HİÇBİR satır yazma — "( Proje )",
+  "( Kişisel Proje )", "( Devam Ediyor )" dahil. Projelerin çalışma tipi yoktur.
+  Proje başlığından sonra doğrudan `- ` maddeleriyle devam et.
 - Etiket değerlerini uydurma. Bilgi yoksa etiket satırını tamamen atla; "Tarih
   belirtilmemiş" gibi doldurma ifadeleri KULLANMA.
 - DETAY maddeleri `- ` ile başlar; her madde ayrı satırda, tek cümlede biter.

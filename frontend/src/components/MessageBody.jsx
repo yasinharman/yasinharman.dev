@@ -10,7 +10,19 @@ import { Fragment } from 'react';
 const HEADING_RE = /^#{1,6}\s+(.*)$/;
 const BULLET_RE = /^(?:[-*•]|\d+[.)])\s+(.*)$/;
 const BOLD_ONLY_RE = /^\*\*(.+?)\*\*[\s.:]*$/;
+// Etiket satiri sozlesmesi: "( Tam Zamanlı · Mayıs 2026 – Temmuz 2026 )" — yani
+// calisma tipi VE/VEYA tarih. Ne ` · ` ayraci ne de rakam iceren bir parantez bu
+// sozlesmeyi karsilamiyor; model ara sira proje basliklarinin altina "( Proje )"
+// gibi bos bir etiket yaziyor ve burasi onu is deneyimi rozeti gibi ciziyordu.
+// Prompt kurali bunu azaltiyor ama garanti etmiyor, o yuzden guvence burada.
 const META_LINE_RE = /^[(（]([^()]+)[)）]$/;
+// Anlamli sayilir: ayrac, tarih (rakam) veya tek basina bir calisma tipi.
+// "( Freelance )" tek kelime ama gecerli bir etiket; "( Proje )" degil.
+const META_CALISMA_TIPI_RE =
+  /^(tam zamanl[ıi]|yar[ıi] zamanl[ıi]|freelance|staj|g[öo]n[üu]ll[üu]|s[öo]zle[şs]meli|full[- ]time|part[- ]time|internship|contract|remote|uzaktan)$/i;
+const META_AYRAC_RE = /[·|;,]|\d/;
+const metaAnlamli = (icerik) =>
+  META_AYRAC_RE.test(icerik) || META_CALISMA_TIPI_RE.test(icerik.trim());
 const META_SPLIT_RE = /\s*[,;·|]\s*/;
 
 // Satır içinde ayrıca çizilen şeyler: link, e-posta, telefon, **kalın**, `kod`, tutar.
@@ -105,7 +117,7 @@ export function parseAnswer(content) {
 
     // Başlığın altına ayrı satıra yazılmış "( Freelance · 2025 – Günümüz )" etiketleri.
     const metaLine = line.match(META_LINE_RE);
-    if (metaLine && previous?.type === 'heading') {
+    if (metaLine && previous?.type === 'heading' && metaAnlamli(metaLine[1])) {
       previous.meta = previous.meta.concat(splitMeta(metaLine[1]));
       continue;
     }
