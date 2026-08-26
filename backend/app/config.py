@@ -38,7 +38,12 @@ class Settings(BaseSettings):
     # RERANK_MIN_SCORE=0.3 satirini tasiyor, ayni ismi yeniden anlamlandirsaydik o
     # deger yeni tabani 0.3'e cakip fallback'i lokalde olu birakirdi. Simdi
     # extra="ignore" onu sessizce yutuyor.
-    RERANK_REL_RATIO: float = 0.4
+    # 0.3 secildi ki iyi bir sorguda (top1~0.99) cutoff ~0.30 cikip kalibre edilmis
+    # eski esikle AYNI yere dussun. 0.4 ile cutoff 0.3998 oluyordu, yani kalibrasyonun
+    # "pozitifler >=0.400" sinirinin tam ustune; kil payi gecen gercek chunk'lar
+    # kesilirdi. 0.3 ile davranis iyi sorgularda eskisiyle ozdes, zayif sorgularda
+    # dagilimla birlikte gevsiyor — yani hicbir yerde eskisinden siki degil.
+    RERANK_REL_RATIO: float = 0.3
     RERANK_ABS_FLOOR: float = 0.15
     RERANK_FALLBACK_N: int = 3
     MATCH_THRESHOLD: float = 0.0
