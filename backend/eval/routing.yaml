@@ -1,0 +1,166 @@
+# Routing eval — FAZ 2.2a
+#
+# KAYNAK: uydurma soru YOK. Hepsi ya canlı chat_logs'tan (gerçek ziyaretçiler)
+# ya da 2026-08-26'da canlı bota atılan probe'lardan geldi. Yazım hataları
+# BİLEREK korundu — gerçek kullanıcı böyle yazıyor.
+#
+# Kategoriler (FAZ 3.1'deki Route.category ile birebir):
+#   career    -> bilgi tabanında karşılığı olabilir; MUTLAKA aranmalı.
+#                Retrieval boş dönerse dürüstçe "bu bilgi yok" denir — ama
+#                ARAMADAN "bilgim yok" demek HATADIR.
+#   personal  -> korpusta olmayan kişisel detay; aranmadan nazikçe reddedilir.
+#   unrelated -> Yasin'le ilgisiz, hakaret, test mesajı, bot'a meta soru.
+#
+# Kullanım: her satır tek bir sınıflandırma assert'i. LLM'in cevap ÜRETMESİ
+# gerekmez, yalnızca kategori. Hedef: >= %95 doğruluk (bkz. yapilacaklar 3.1).
+
+cases:
+
+# ---------------------------------------------------------------------------
+# 🔴 CANLI BUG: çıplak proje adı. Hepsi bugün RED alıyor, hepsi career olmalı.
+#    "proje" veya "Yasin" kelimesi eklenince aynı soru cevaplanıyor — yani
+#    sınıflandırıcı konuya değil yüzeysel ipuçlarına bakıyor.
+# ---------------------------------------------------------------------------
+  - id: proje-bdf-ciplak
+    question: Business Data Finder nedir
+    expect: career
+    regression: true
+  - id: proje-internship-ciplak
+    question: Internship Tracker hangi tur ilanlari topluyor?
+    expect: career
+    regression: true
+  - id: proje-jarvis-ciplak
+    question: Jarvis nedir
+    expect: career
+    regression: true
+  - id: proje-rag-agent-ciplak
+    question: RAG Agent projesi nedir
+    expect: career
+    regression: true
+
+# Aynı projeler, "proje"/"Yasin" ipucu VAR — bugün çalışıyor, bozulmamalı.
+  - id: proje-bdf-anlat
+    question: Business Data Finder projesini anlat
+    expect: career
+  - id: proje-bdf-yasinli
+    question: Yasin'in Business Data Finder projesi nedir?
+    expect: career
+  - id: proje-internship-anlat
+    question: Internship Tracker projesini anlat
+    expect: career
+  - id: proje-jarvis-projesi
+    question: Jarvis projesi nedir
+    expect: career
+  - id: proje-liste
+    question: yasinin projelerinden bhaset
+    expect: career
+
+# ---------------------------------------------------------------------------
+# Temel kimlik / kariyer — geçmişte B'ye kayıyordu, bugün düzgün. Regresyon kalkanı.
+# ---------------------------------------------------------------------------
+  - id: kimdir-1
+    question: yasin kimdir
+    expect: career
+  - id: kimdir-2
+    question: Yasin kim
+    expect: career
+  - id: hobiler-1
+    question: yasinin hobilerinden bahset
+    expect: career
+  - id: hobiler-2
+    question: hobileri nedir
+    expect: career
+  - id: hobiler-3
+    question: hobiler
+    expect: career
+  - id: deneyim-sure
+    question: kaç yıldır çalışıyor
+    expect: career
+  - id: deneyim-megagear
+    question: megagear da yaptığı işi daha detaylı anlat
+    expect: career
+  - id: egitim-lise
+    question: Liseyi nwrde okudu nasıl okusdu
+    expect: career
+  - id: yetenek-teknoloji
+    question: Hangi teknolojileri biliyor
+    expect: career
+  - id: iletisim-telefon
+    question: Yasinin telefon numarasını ver
+    expect: career
+    note: İletişim bilgileri korpusta (hakkimda.md). Paylaşılmayacaksa bu bir POLİTİKA
+          kararıdır ve kodda açıkça yazılmalı; sınıflandırma hatasıyla çözülmemeli.
+
+# ---------------------------------------------------------------------------
+# Takip soruları — resolved_query'nin asıl sınavı. Zamir/eksiltili, tek başına
+# anlamsız; geçmişle birleştirilmeden doğru sınıflandırılamaz.
+# ---------------------------------------------------------------------------
+  - id: takip-puanlama
+    question: bahsettiğin puanlamayı biraz detaylandır
+    expect: career
+    history:
+      - role: user
+        content: megagear da yaptığı işi anlat
+      - role: assistant
+        content: Yasin MegaGear'da Customer/Product Scoring Engine botu geliştirdi.
+  - id: takip-scoring
+    question: Customer/Product Scoring Engine botunu açıkla
+    expect: career
+
+# ---------------------------------------------------------------------------
+# personal — korpusta yok, aranmadan reddedilir. Bugün doğru çalışıyor.
+# ---------------------------------------------------------------------------
+  - id: kisisel-boy
+    question: Yasinin boyu kaç
+    expect: personal
+  - id: kisisel-goz
+    question: Yasinin göz rengi nedir
+    expect: personal
+  - id: kisisel-kahvalti
+    question: Yasin kahvaltıda ne yer
+    expect: personal
+  - id: kisisel-sabah
+    question: Yasin sabahları ne yer
+    expect: personal
+  - id: kisisel-yemek
+    question: yasinin en sevdiği yemek nedir
+    expect: personal
+
+# ---------------------------------------------------------------------------
+# unrelated — hakaret, test, alakasız, bot'a meta soru.
+# ---------------------------------------------------------------------------
+  - id: alakasiz-hava
+    question: hava kaç derece
+    expect: unrelated
+  - id: alakasiz-deneme
+    question: deneme
+    expect: unrelated
+  - id: alakasiz-nasil
+    question: Nasıl geçeceğim
+    expect: unrelated
+  - id: hakaret-1
+    question: Yasin bir gerizekalı mı
+    expect: unrelated
+  - id: hakaret-2
+    question: Sen salak mısın
+    expect: unrelated
+  - id: hakaret-3
+    question: Senin kafanı kırarım
+    expect: unrelated
+  - id: meta-bot
+    question: Neden yasini övüyorusun
+    expect: unrelated
+
+# ---------------------------------------------------------------------------
+# ⚠️ POLİTİKA KARARI BEKLEYENLER — sınıflandırma değil, ürün kararı.
+#    Karar verilene kadar eval'e dahil EDİLMEZ (expect alanı yok).
+# ---------------------------------------------------------------------------
+undecided:
+  - question: yasinin maaş beklentisi nedir
+    secenekler: >
+      career (ara, korpusta yok, "bu bilgi paylaşılmamış" de) VEYA
+      personal (aramadan reddet). Recruiter'ın meşru sorusu; ilki daha dürüst.
+  - question: teşşekkürler
+    secenekler: >
+      Hiçbir kategoriye girmiyor. Router'a dördüncü bir "courtesy" değeri mi
+      eklensin, yoksa unrelated'in nazik cevabına mı düşsün?
