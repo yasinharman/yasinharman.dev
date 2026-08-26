@@ -22,11 +22,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import warnings
 from collections import Counter
 from pathlib import Path
 
 import yaml
 from langchain_core.messages import AIMessage, HumanMessage
+
+# langchain, structured output cevabini serilestirirken zararsiz ama gurultulu bir
+# pydantic uyarisi uretiyor; eval ciktisi okunabilir kalsin.
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
 
 _YAML = Path(__file__).parent / "routing.yaml"
 
@@ -98,13 +103,39 @@ async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
             "sorgular": [t.get("query") for t in trace]}
 
 
-async def _main(eszaman: int, sadece: str | None) -> int:
+async def _router_calistir(case: dict, sem: asyncio.Semaphore) -> dict:
+    """Router'i IZOLE olcer: agent hic calismaz, vaka basina tek kucuk cagri."""
+    from app.router import classify, courtesy_reply
+
+    nazik = courtesy_reply(case["question"], "tr")
+    if nazik is not None:
+        gecti = case["expect"] == "courtesy"
+        return {**case, "gecti": gecti, "gozlem": "courtesy (deterministik)",
+                "aradi": False, "cevap": "", "sorgular": []}
+
+    async with sem:
+        try:
+            route = await classify(case["question"], _history(case))
+        except Exception as exc:  # noqa: BLE001 — tek vaka tüm eval'i düşürmesin
+            return {**case, "gecti": False, "gozlem": f"{type(exc).__name__}: {exc}",
+                    "aradi": False, "cevap": "", "sorgular": []}
+
+    gecti = route.category == case["expect"]
+    return {**case, "gecti": gecti,
+            "gozlem": f"{route.category}  (beklenen {case['expect']})",
+            "aradi": route.category == "career", "cevap": route.resolved_query[:150],
+            "sorgular": [route.kb_query] if route.kb_query else []}
+
+
+async def _main(eszaman: int, sadece: str | None, router: bool = False) -> int:
     cases = _yukle()
     if sadece:
         cases = [c for c in cases if c["expect"] == sadece]
 
     sem = asyncio.Semaphore(eszaman)
-    sonuclar = await asyncio.gather(*(_calistir(c, sem) for c in cases))
+    kosucu = _router_calistir if router else _calistir
+    print(f"mod: {'router (izole)' if router else 'baseline (bugünkü sistem)'}")
+    sonuclar = await asyncio.gather(*(kosucu(c, sem) for c in cases))
 
     kategori = Counter()
     gecen = Counter()
@@ -145,5 +176,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Routing eval")
     ap.add_argument("--eszaman", type=int, default=4, help="paralel istek sayısı")
     ap.add_argument("--sadece", help="yalnızca bu kategoriyi koş")
+    ap.add_argument("--router", action="store_true",
+                    help="router'ı izole ölç (agent çalışmaz)")
     a = ap.parse_args()
-    raise SystemExit(asyncio.run(_main(a.eszaman, a.sadece)))
+    raise SystemExit(asyncio.run(_main(a.eszaman, a.sadece, a.router)))

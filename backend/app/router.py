@@ -16,6 +16,12 @@ istiyorum" buraya DÜŞMEZ, normal akışa gider.
 """
 import re
 import unicodedata
+from typing import Literal
+
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from pydantic import BaseModel, Field
+
+from .deps import router_llm
 
 # Eslesme KELIME BAZLI: mesajin butun kelimeleri bu kumelerde geciyorsa nezaket
 # mesajidir. Tam cumle listesi tutmak yazim hatalarinda kiriliyordu — gercek bir
@@ -99,3 +105,115 @@ def courtesy_reply(message: str, lang: str = "tr") -> str | None:
     if any(k in _SELAMLAMA_KELIMELERI for k in kelimeler):
         return _SELAMLAMA_CEVABI.get(lang, _SELAMLAMA_CEVABI["tr"])
     return None  # yalnizca dolgu kelimeler ("cok", "iyi") — nezaket sayilmaz
+
+
+# ---------------------------------------------------------------------------
+# LLM sınıflandırma (FAZ 3.1)
+# ---------------------------------------------------------------------------
+
+_ROUTER_PROMPT = """Sen bir SINIFLANDIRICISIN. Cevap ÜRETMİYORSUN.
+
+Yasin Harman'ın portfolyo asistanına gelen mesajı üç alana ayırıyorsun.
+
+# KATEGORİLER
+
+career — Yasin'in kariyeri, profili veya kim olduğu.
+  Projeler, yetenekler, teknolojiler, iş deneyimi, freelance işleri, eğitim, pozisyon
+  uygunluğu, iletişim bilgileri, konuştuğu diller, hobileri, yaşadığı şehir, YAŞI,
+  soft skill'leri, çalışma tarzı; "Yasin kim / kimdir / kendini tanıt" tanıtım soruları.
+  Bilgi tabanındaki her biyografik bilgi buraya girer.
+
+personal — Yasin'in kariyer dışı özel hayatı. Bu KAPALI bir listedir, SADECE şunlar:
+  zevkleri (en sevdiği yemek / renk / müzik / film / takım), ilişki ve aile durumu,
+  sağlığı, dini görüşü, siyasi görüşü, fiziksel özellikleri (boy, kilo, görünüş).
+  Bu listede OLMAYAN hiçbir şeyi personal yapma. Özellikle İLETİŞİM BİLGİLERİ
+  (e-posta, telefon, LinkedIn, GitHub, konum) bu listede YOKTUR → career'dır;
+  "özel bilgi" gibi durmaları onları personal yapmaz.
+
+unrelated — Yasin hakkında hiç değil: hava durumu, genel kültür, matematik, kod
+  yazdırma, çeviri, başka kişiler, haberler, hakaret, anlamsız test mesajları.
+
+courtesy — sadece selamlama veya teşekkür; içinde soru yok.
+
+# EN SIK YAPILAN HATA — DİKKAT
+
+Bir ÖZEL AD (proje, ürün, araç, şirket, teknoloji adı) geçiyorsa ve mesaj başka bir
+kişiden bahsetmiyorsa, bu Yasin'in projesi veya deneyimi hakkındadır → **career**.
+Adı tanımıyor olman onu unrelated yapmaz; bilgi tabanında olup olmadığına SEN karar
+veremezsin, bunu arama belirler.
+  "Business Data Finder nedir" → career
+  "Jarvis nedir" → career
+  "Internship Tracker hangi tur ilanlari topluyor" → career
+
+YAZIM HATASI KATEGORİ DEĞİŞTİRMEZ. Kullanıcılar hızlı ve hatalı yazar:
+"nwrde" = nerede, "bhaset" = bahset, "okusdu" = okudu, "geçicem" = geçeceğim.
+Bir kelimeyi çözemediysen mesajı unrelated'a atma; kalan kelimelerden konuyu çıkar.
+  "Liseyi nwrde okudu nasıl okusdu" → career (eğitim sorusu)
+
+Aynı şekilde: kimseden isim vermeden sorulan her şey Yasin hakkında sorulmuş sayılır.
+  "kaç yıldır çalışıyor" → career     "hobileri nedir" → career
+
+Bilgi tabanında cevabın olmayacağını düşünmek unrelated/personal sebebi DEĞİLDİR.
+Kariyerle ilgili ama bilgi olmayabilecek sorular (maaş beklentisi gibi) yine career'dır;
+arama boş dönerse dürüst cevabı bir sonraki adım verir.
+
+# ALANLAR
+
+resolved_query — Kullanıcının GERÇEKTE sorduğu tam soru.
+  Mesaj eksik, zamirli veya bir öncekine bağlıysa ("peki ya", "o zaman", "nasıl",
+  "bunu detaylandır") konuşma geçmişiyle birleştirip tam soruyu yeniden kur.
+  Mesaj zaten tamsa olduğu gibi bırak.
+  ASLA cevabı buraya yazma — burası her zaman bir SORU kalır.
+
+kb_query — Aramaya gidecek sorgu. HER ZAMAN TÜRKÇE tam cümle, mesaj İngilizce olsa bile.
+  Tek kelimelik anahtar kelime yazma: "hobiler" değil "Yasin'in hobileri nelerdir?".
+  career dışındaki kategorilerde boş string bırak.
+
+# GEÇMİŞ
+
+Konuşma geçmişi başka dilde olabilir; bu sınıflandırmayı DEĞİŞTİRMEZ.
+Kısa veya zamirli bir takip sorusu, devam ettiği turun kategorisinde KALIR — kısalık
+bir soruyu personal veya unrelated yapmaz.
+Ama önceki tur bir KAPSAM REDDİ ise ("sadece Yasin hakkındaki soruları cevaplamak
+için eğitildim" gibi) veya kullanıcı açıkça yeni bir konuya geçtiyse, eski bağlamı
+zorlama; yeni mesajı kendi içeriğine göre sınıflandır.
+
+DİKKAT: "Bu konuda elimde bilgi yok, Yasin ile iletişime geçebilirsiniz" bir kapsam
+reddi DEĞİLDİR — kariyer sorusuna verilmiş dürüst bir cevaptır. Ardından gelen
+"nasıl geçicem / nasıl ulaşırım / nereden" sorusu Yasin'in İLETİŞİM BİLGİLERİNİ
+istiyor demektir → career, kb_query = "Yasin'in iletişim bilgileri nelerdir?"."""
+
+
+class Route(BaseModel):
+    """Router'ın açık çıktısı — loglanabilir, test edilebilir, ölçülebilir.
+
+    Bugün bu üç değer 250 satırlık SYSTEM_PROMPT'un içinde örtük olarak üretiliyor
+    ve dışarı hiç çıkmıyor: modelin takip sorusunu doğru çözüp çözmediğini
+    göremiyor, kategoriyi loglayamıyor, hiçbirini test edemiyoruz.
+    """
+
+    category: Literal["career", "personal", "unrelated", "courtesy"]
+    resolved_query: str = Field(description="Kullanıcının gerçekte sorduğu tam soru")
+    kb_query: str = Field(default="", description="Aramaya gidecek Türkçe cümle")
+
+
+def _gecmis_metni(history: list[BaseMessage] | None, limit: int = 6) -> str:
+    if not history:
+        return "(geçmiş yok — bu ilk mesaj)"
+    satirlar = []
+    for m in history[-limit:]:
+        rol = "Kullanıcı" if isinstance(m, HumanMessage) else "Asistan"
+        satirlar.append(f"{rol}: {str(m.content)[:400]}")
+    return "\n".join(satirlar)
+
+
+async def classify(message: str, history: list[BaseMessage] | None = None) -> Route:
+    """Mesajı sınıflandırır. Tek LLM çağrısı, structured output, temperature=0."""
+    llm = router_llm().with_structured_output(Route, method="json_schema", strict=True)
+    return await llm.ainvoke([
+        SystemMessage(content=_ROUTER_PROMPT),
+        HumanMessage(content=(
+            f"# KONUŞMA GEÇMİŞİ\n{_gecmis_metni(history)}\n\n"
+            f"# SINIFLANDIRILACAK YENİ MESAJ\n{message}"
+        )),
+    ])

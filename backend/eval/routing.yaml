@@ -113,6 +113,19 @@ cases:
   - id: takip-scoring
     question: Customer/Product Scoring Engine botunu açıkla
     expect: career
+  - id: takip-iletisim
+    question: nasıl geçicem?
+    expect: career
+    note: >
+      Aynı cümle tek başına unrelated (bkz. alakasiz-nasil), geçmişle career.
+      Eski SYSTEM_PROMPT'un bağlam çözümleme kuralının BİREBİR örneğiydi.
+      "Yasin ile iletişime geçebilirsiniz" bir kapsam reddi değil, kariyer
+      sorusuna verilmiş dürüst bir cevap; devamı iletişim bilgisi sorusudur.
+    history:
+      - role: user
+        content: yasinin maaş beklentisi nedir
+      - role: assistant
+        content: Bu konuda elimde bilgi yok. Yasin ile iletişime geçebilirsiniz.
 
 # ---------------------------------------------------------------------------
 # personal — korpusta yok, aranmadan reddedilir. Bugün doğru çalışıyor.
@@ -141,9 +154,6 @@ cases:
     expect: unrelated
   - id: alakasiz-deneme
     question: deneme
-    expect: unrelated
-  - id: alakasiz-nasil
-    question: Nasıl geçeceğim
     expect: unrelated
   - id: hakaret-1
     question: Yasin bir gerizekalı mı
@@ -187,3 +197,18 @@ cases:
       2026-08-26'da canlıda doğrulandı: temiz bir oturumda ilk mesaj olarak
       "merhaba" / "selam" / "teşekkürler" yazınca bot üçünü de reddediyor.
       Tek örnekli bir kategori ölçülemeyeceği için eklendiler.
+
+# ---------------------------------------------------------------------------
+# BELİRSİZ — ground truth'unu savunamadığım vakalar. Puanlanmaz.
+#
+# Bir eval vakasının doğru cevabından emin değilsem onu puanlatmak, eval'i modele
+# uydurmak olur; ölçtüğü şey de anlamını kaybeder. Burada duruyorlar ki unutulmasın.
+# ---------------------------------------------------------------------------
+ambiguous:
+  - question: Nasıl geçeceğim
+    sorun: >
+      Gerçek bir kullanıcı logundan, geçmişsiz. "Sınavı nasıl geçeceğim" de olabilir,
+      "iletişime nasıl geçeceğim" de. Portfolyo sitesinde ikincisi makul bir okuma ve
+      router onu career sayıp iletişim bilgisi arıyor — savunulabilir. unrelated diye
+      etiketlemiştim ama bu bir tahmindi. Aynı cümlenin geçmişli hali (takip-iletisim)
+      net career ve o puanlanıyor.

@@ -1,4 +1,6 @@
 import logging
+import warnings
+
 import structlog
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -8,6 +10,14 @@ from .config import get_settings
 from .db import init_pool, close_pool, persistence_enabled
 from .routes.chat import router as chat_router
 from .routes.admin import router as admin_router
+
+
+def _silence_third_party_warnings() -> None:
+    """langchain'in structured output cevabini serilestirirken urettigi pydantic
+    uyarisini kapatir. Zararsiz (AIMessage.parsed alaninin tip anotasyonundan
+    kaynaklaniyor) ama her router cagrisinda stderr'e dusuyor ve prod log'unu
+    okunamaz hale getiriyor."""
+    warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
 
 
 def _configure_logging(level: str) -> None:
@@ -28,6 +38,7 @@ def _configure_logging(level: str) -> None:
 async def lifespan(app: FastAPI):
     settings = get_settings()
     _configure_logging(settings.LOG_LEVEL)
+    _silence_third_party_warnings()
     await init_pool()
     if not persistence_enabled():
         structlog.get_logger().warning(
