@@ -47,3 +47,7 @@ aşağıdaki kanalları kullanabilir:
 - GitHub: github.com/yasinharman
 - Upwork: upwork.com/freelancers/~013fbee1828b285d61
 - Konum: İstanbul, Türkiye
+
+Telefon numarası burada paylaşılmamaktadır. Yasin'in telefon numarasını isteyenler,
+telefonla iletişim kurmak veya onu aramak isteyenler önce contact@yasinharman.dev
+adresine e-posta göndererek talep edebilir.

@@ -91,8 +91,12 @@ cases:
   - id: iletisim-telefon
     question: Yasinin telefon numarasını ver
     expect: career
-    note: İletişim bilgileri korpusta (hakkimda.md). Paylaşılmayacaksa bu bir POLİTİKA
-          kararıdır ve kodda açıkça yazılmalı; sınıflandırma hatasıyla çözülmemeli.
+    note: >
+      Politika kararlaştırıldı (2026-08-26): numara korpustan çıkarıldı, yerine
+      "telefon için önce e-posta ile talep edin" metni kondu. Karar KOD'a değil
+      KORPUSA yazıldı — iletişim hakkında ne söyleneceği bir veri sorusu, politika
+      kodu değil. Yan etki: bu soru eskiden aramadan reddediliyordu, korpusta
+      karşılığı olunca sınıflandırma da düzeldi.
 
 # ---------------------------------------------------------------------------
 # Takip soruları — resolved_query'nin asıl sınavı. Zamir/eksiltili, tek başına
