@@ -16,6 +16,9 @@ def _configure_logging(level: str) -> None:
         processors=[
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
+            # format_exc_info olmadan log.exception() JSON'a yalnizca
+            # "exc_info": true yaziyordu; hatanin kendisi log'a hic dusmuyordu.
+            structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ]
     )
