@@ -34,9 +34,10 @@ class Settings(BaseSettings):
 
     # Rerank esigi mutlak degil, dagilima gore belirlenir: cutoff = max(FLOOR, top1*RATIO).
     # Sabit esik (eski RERANK_MIN_SCORE=0.3) calismiyordu, gerekcesi
-    # retriever.py::_apply_cutoff docstring'inde. Isim bilerek degisti: .env ve
-    # Coolify'da RERANK_MIN_SCORE=0.3 set edilmis durumda, ayni ismi yeniden
-    # anlamlandirsaydik prod'da esik 0.3'te kalir ve duzeltme etkisiz olurdu.
+    # retriever.py::_apply_cutoff docstring'inde. Isim bilerek degisti: backend/.env
+    # RERANK_MIN_SCORE=0.3 satirini tasiyor, ayni ismi yeniden anlamlandirsaydik o
+    # deger yeni tabani 0.3'e cakip fallback'i lokalde olu birakirdi. Simdi
+    # extra="ignore" onu sessizce yutuyor.
     RERANK_REL_RATIO: float = 0.4
     RERANK_ABS_FLOOR: float = 0.15
     RERANK_FALLBACK_N: int = 3
