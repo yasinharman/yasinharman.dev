@@ -4,10 +4,14 @@
 
 Yasin Harman'ın iş tecrübeleri, çalıştığı yerler ve görevleri şunlardır:
 
+Profesyonel yazılım deneyimi Mayıs 2026'da başlamıştır. Toplam deneyim süresi,
+Mayıs 2026'dan bugüne kadar geçen süredir. Aşağıdaki işler kısmen aynı dönemde
+paralel yürüdüğü için süreleri birbirine EKLENMEZ.
+
 - MegaGear — Software Engineer (Tam Zamanlı, Mayıs 2026 – Temmuz 2026). E-ticaret
   veri altyapısı, Customer/Product Scoring Engine ve Meta reklam senkronizasyon
   botu üzerinde çalıştı.
-- Upwork — Scale AI (Freelance, Mayıs 2025 – Günümüz). Outlier platformunda
+- Upwork — Scale AI (Freelance, Mayıs 2026 – Günümüz). Outlier platformunda
   kodlama ajanlarını ölçen değerlendirme görevleri hazırlıyor; LLM eğitimi ve
   yanıt değerlendirme projelerinde görev alıyor.
 
@@ -38,7 +42,7 @@ tutma listeleri (Custom Audience) olarak kullanılmak üzere her gece reklam
 platformuna otomatik yükleyen sistemi geliştirdi. Tüm sistemi Docker ile bulut
 sunucu üzerinde zamanlanmış görevler halinde 7/24 çalıştırdı.
 
-## Upwork — Scale AI (Freelance, Mayıs 2025 – Günümüz)
+## Upwork — Scale AI (Freelance, Mayıs 2026 – Günümüz)
 
 Yasin Harman, Scale AI ile Upwork üzerinden kontratlı olarak, Outlier platformunda
 AI Engineer (yapay zeka mühendisi) olarak çalışmaktadır. Büyük dil modellerinin

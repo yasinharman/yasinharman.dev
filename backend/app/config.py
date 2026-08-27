@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # degistirebilelim (ucuz modelle dene, pahaliya gec, geri al).
     OPENAI_ROUTER_MODEL: str = "gpt-4o-mini"
     OPENAI_EMBED_MODEL: str = "text-embedding-3-small"
+    # Yalnizca eval/judge.py kullanir, uygulama yolunda cagrilmaz. Uretenden
+    # daha guclu bir model bilerek: hakem, uretenin kacirdigini yakalayacaksa
+    # ondan zayif olmamali.
+    OPENAI_JUDGE_MODEL: str = "gpt-4o"
 
     COHERE_API_KEY: str
     COHERE_RERANK_MODEL: str = "rerank-multilingual-v3.0"

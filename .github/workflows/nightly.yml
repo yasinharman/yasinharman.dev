@@ -73,3 +73,11 @@ jobs:
         if: always() && steps.kontrol.outputs.hazir == 'true'
         working-directory: backend
         run: python -m eval.run_routing
+
+      # Cevaptaki her iddia, modele gösterilen chunk'larda var mı? Eşik 1.0 ve
+      # bilerek: %90 "cevapların onda biri yalan" demek. Hakem üretenden ayrı ve
+      # daha güçlü bir model — kendi cevabını kendine denetletmek ölçüm değildir.
+      - name: Groundedness eval (14 vaka)
+        if: always() && steps.kontrol.outputs.hazir == 'true'
+        working-directory: backend
+        run: python -m eval.run_groundedness
