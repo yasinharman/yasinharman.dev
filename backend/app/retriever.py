@@ -9,6 +9,7 @@ her search() çağrısı buraya sorgu + sonuç özetini ekler (chat_logs.retriev
 yazılır). Set edilmemişse (CLI, eval) hiçbir şey kaydedilmez.
 """
 import asyncio
+import time
 from contextvars import ContextVar
 from functools import lru_cache
 
@@ -142,7 +143,7 @@ def _apply_cutoff(reranked: list[Document], s: Settings) -> tuple[list[Document]
 
 
 def _record_trace(query: str, reranked: list[Document], kept: list[Document],
-                  cutoff: float) -> None:
+                  cutoff: float, duration_ms: int) -> None:
     trace = retrieval_trace.get()
     if trace is None:
         return
@@ -160,11 +161,16 @@ def _record_trace(query: str, reranked: list[Document], kept: list[Document],
         ],
         "kept": len(kept),
         "cutoff": round(cutoff, 4),
+        # Cagri basina sure: /chat toplam retrieval suresini bunlari toplayarak
+        # buluyor. Agent tool'u birden fazla kez cagirabildigi icin tek bir
+        # "retrieval basladi/bitti" olcumu dogru sonuc vermezdi.
+        "duration_ms": duration_ms,
     })
 
 
 async def search(query: str) -> list[Document]:
     s = get_settings()
+    t0 = time.monotonic()
     docs = await _vector_search(query, k=s.RETRIEVER_K)
     cutoff = 0.0
     try:
@@ -176,5 +182,5 @@ async def search(query: str) -> list[Document]:
         structlog.get_logger().warning("rerank_failed_fallback", query=query[:80])
         reranked = kept = docs[: s.RERANK_TOP_N]
     kept = await _expand_overviews(kept)
-    _record_trace(query, reranked, kept, cutoff)
+    _record_trace(query, reranked, kept, cutoff, int((time.monotonic() - t0) * 1000))
     return kept

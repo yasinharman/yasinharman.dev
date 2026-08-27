@@ -1,3 +1,4 @@
+-- target: chat
 CREATE TABLE IF NOT EXISTS chat_messages (
   id           BIGSERIAL PRIMARY KEY,
   session_id   TEXT NOT NULL,

@@ -1,78 +1,49 @@
 """chat_logs yazımı — allowed / blocked / error.
 
-Loglama hiçbir koşulda isteği patlatmaz. İki ayrı gerileme yolu var, ikisi de
-migration'ların canlıya ELLE uygulanmasından kaynaklanıyor: main'e push otomatik
-deploy tetiklediği için kod, migration'ından önce canlıda olabilir.
+Loglama hiçbir koşulda isteği patlatmaz: log yazamamak, kullanıcıya elindeki
+cevabı vermemek için yeterli bir sebep değil.
 
-  - UndefinedColumnError → 005_chat_logs_route.sql yoksa route'suz, 003 de yoksa
-    retrieval'sız yaz. Kademeli gerileme: her adımda bir kolon daha düşer.
-  - CheckViolationError  → 004_chat_logs_error_status.sql yok: status='error' CHECK
-    kısıtına takılıyor; satırı kaybetmektense 'blocked' olarak, sebebi reason'da
-    saklayarak yaz.
+Burada eskiden üç kademeli bir gerileme merdiveni vardı (UndefinedColumnError →
+kolonsuz yaz, CheckViolationError → status'ü 'blocked'a düşür). Sebebi
+migration'ların canlıya elle uygulanmasıydı: push otomatik deploy tetiklediği
+için kod, şemasından önce canlıya çıkabiliyordu. `app/migrate.py` bunu startup'ta
+kapattığından merdiven ölü koda dönüştü ve kaldırıldı — semptomu tedavi ediyordu,
+sebep artık yok.
 """
 import json
 
-import asyncpg
 import structlog
 
 from .db import persistence_enabled, pool
 
 log = structlog.get_logger()
 
-_INSERT_TAM = """
+_INSERT = """
     INSERT INTO chat_logs
-      (session_id, status, reason, user_message, ai_response, latency_ms, retrieval, route)
-    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-"""
-
-_INSERT_RETRIEVAL = """
-    INSERT INTO chat_logs
-      (session_id, status, reason, user_message, ai_response, latency_ms, retrieval)
-    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
-"""
-
-_INSERT_PLAIN = """
-    INSERT INTO chat_logs (session_id, status, reason, user_message, ai_response, latency_ms)
-    VALUES ($1, $2, $3, $4, $5, $6)
+      (session_id, status, reason, user_message, ai_response, latency_ms,
+       retrieval, route, timings)
+    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb)
 """
 
 _REASON_MAX_LEN = 300
 
 
-async def _insert(conn, status, session_id, reason, user_message, ai_response,
-                  latency_ms, retrieval, route) -> None:
-    payload = json.dumps(retrieval) if retrieval is not None else None
-    rota = json.dumps(route) if route is not None else None
-    ortak = (session_id, status, reason, user_message, ai_response, latency_ms)
-    try:
-        await conn.execute(_INSERT_TAM, *ortak, payload, rota)
-        return
-    except asyncpg.exceptions.UndefinedColumnError:
-        pass  # 005 uygulanmamis
-    try:
-        await conn.execute(_INSERT_RETRIEVAL, *ortak, payload)
-        return
-    except asyncpg.exceptions.UndefinedColumnError:
-        pass  # 003 de uygulanmamis
-    await conn.execute(_INSERT_PLAIN, *ortak)
+def _js(deger) -> str | None:
+    return json.dumps(deger) if deger is not None else None
 
 
 async def _write(status: str, session_id: str, reason: str | None, user_message: str,
                  ai_response: str | None, latency_ms: int,
                  retrieval: list[dict] | None = None,
-                 route: dict | None = None) -> None:
+                 route: dict | None = None,
+                 timings: dict | None = None) -> None:
     if not persistence_enabled():
         return
     try:
         async with pool().acquire() as conn:
-            try:
-                await _insert(conn, status, session_id, reason, user_message,
-                              ai_response, latency_ms, retrieval, route)
-            except asyncpg.exceptions.CheckViolationError:
-                if status != "error":
-                    raise
-                await _insert(conn, "blocked", session_id, f"error:{reason}",
-                              user_message, ai_response, latency_ms, retrieval, route)
+            await conn.execute(_INSERT, session_id, status, reason, user_message,
+                               ai_response, latency_ms, _js(retrieval), _js(route),
+                               _js(timings))
     except Exception:
         # Log yazamamak cevabı iptal etmek için yeterli bir sebep değil: kullanıcı
         # elindeki cevabı almalı. Sessiz kalmıyoruz, structlog'a düşüyor.
@@ -80,8 +51,9 @@ async def _write(status: str, session_id: str, reason: str | None, user_message:
 
 
 async def log_blocked(session_id: str, user_message: str, reason: str, latency_ms: int,
-                      route: dict | None = None) -> None:
-    await _write("blocked", session_id, reason, user_message, None, latency_ms, route=route)
+                      route: dict | None = None, timings: dict | None = None) -> None:
+    await _write("blocked", session_id, reason, user_message, None, latency_ms,
+                 route=route, timings=timings)
 
 
 async def log_allowed(
@@ -92,9 +64,10 @@ async def log_allowed(
     reason: str | None = None,
     retrieval: list[dict] | None = None,
     route: dict | None = None,
+    timings: dict | None = None,
 ) -> None:
     await _write("allowed", session_id, reason, user_message, ai_response, latency_ms,
-                 retrieval, route)
+                 retrieval, route, timings)
 
 
 async def log_error(
@@ -104,6 +77,7 @@ async def log_error(
     latency_ms: int,
     retrieval: list[dict] | None = None,
     route: dict | None = None,
+    timings: dict | None = None,
 ) -> None:
     """Agent/retrieval patladığında satır yazar — aksi halde prod hata oranı görünmez.
 
@@ -111,4 +85,5 @@ async def log_error(
     okurken en değerli bilgi.
     """
     reason = f"{type(exc).__name__}: {exc}"[:_REASON_MAX_LEN]
-    await _write("error", session_id, reason, user_message, None, latency_ms, retrieval, route)
+    await _write("error", session_id, reason, user_message, None, latency_ms,
+                 retrieval, route, timings)

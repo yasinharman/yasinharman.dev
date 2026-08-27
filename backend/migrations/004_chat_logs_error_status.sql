@@ -1,3 +1,4 @@
+-- target: chat
 -- 004: Hata gözlemlenebilirliği — CHAT DB'de çalıştırılır (DATABASE_URL,
 -- Coolify'daki Postgres; pgAdmin veya psql ile). Supabase'de DEĞİL.
 --

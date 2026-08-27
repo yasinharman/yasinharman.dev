@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .db import close_pool, init_pool, persistence_enabled
+from .migrate import run_migrations
 from .routes.admin import router as admin_router
 from .routes.chat import router as chat_router
 
@@ -45,6 +46,14 @@ async def lifespan(app: FastAPI):
             "persistence_disabled",
             detail="MODE=local; sohbet geçmişi ve chat_logs DB'ye yazılmayacak.",
         )
+    else:
+        # Servis vermeden ONCE. Push = otomatik deploy oldugu icin migration'lar
+        # elle uygulandiginda kod, semasindan once canliya cikabiliyordu; artik
+        # cikamaz. Hata bilerek yutulmuyor: bozuk bir migration'da konteyner ayaga
+        # kalkmasin. Bilinen yanlis bir semayla servis vermek, hic vermemekten kotu.
+        yeni = await run_migrations()
+        if yeni:
+            structlog.get_logger().info("migrations_applied", versions=yeni)
     yield
     await close_pool()
 
