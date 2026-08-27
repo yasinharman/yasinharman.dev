@@ -22,7 +22,27 @@ class Settings(BaseSettings):
     # Router ayri tutuluyor ki siniflandirmayi cevap uretiminden bagimsiz
     # degistirebilelim (ucuz modelle dene, pahaliya gec, geri al).
     OPENAI_ROUTER_MODEL: str = "gpt-4o-mini"
-    OPENAI_EMBED_MODEL: str = "text-embedding-3-small"
+    # 3-large, 1536 boyuta KISALTILMIS halde (Matryoshka). Olculdu — golden set'in
+    # 28 pozitif vakasi, yalnizca vector asamasi, rerank yok:
+    #
+    #   model                       boyut  recall@1  recall@5   MRR    en kotu sira
+    #   text-embedding-3-small      1536    %78.6     %96.4    0.857        7
+    #   text-embedding-3-large      1536    %85.7    %100.0    0.912        5   <-
+    #   text-embedding-3-large      3072    %85.7    %100.0    0.909        5
+    #   embed-multilingual-v3.0     1024    %85.7     %92.9    0.901       11
+    #
+    # 1536'da kalmasi bilincli: sema (vector(1536)) ve RPC aynen duruyor, migration
+    # gerekmiyor. 3072 hem olcumde daha iyi degil hem de pgvector'un hnsw/ivfflat
+    # index'leri 2000 boyutta tavan yaptigi icin index'i tamamen kaybettirirdi.
+    #
+    # Zincirin sonunda hit rate iki modelde de 32/32 — rerank siralamayi zaten
+    # duzeltiyor. Kazanc korpus buyudukce degerlenecek bir pay: vector asamasinin
+    # rerank'e daha iyi bir aday listesi vermesi.
+    #
+    # Model degistirilirse TAM RE-INGEST sart: korpusta iki modelin vektorlerinin
+    # karismasi benzerligi anlamsiz kilar.
+    OPENAI_EMBED_MODEL: str = "text-embedding-3-large"
+    OPENAI_EMBED_DIM: int = 1536
     # Yalnizca eval/judge.py kullanir, uygulama yolunda cagrilmaz. Uretenden
     # daha guclu bir model bilerek: hakem, uretenin kacirdigini yakalayacaksa
     # ondan zayif olmamali.
