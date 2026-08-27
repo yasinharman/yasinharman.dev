@@ -80,6 +80,11 @@ def _rerank(query: str, docs: list[Document], top_n: int) -> list[Document]:
 
 _OVERVIEW_SUFFIX = "Listesi"
 
+# Genisleyen bolumler ozetin skorunu miras alirken aralarindaki belge sirasini
+# korusun diye uygulanan kucuk ceza. Ozet ile bir sonraki gercek skor arasindaki
+# tipik farktan (0.02+) kucuk olmali ki grup ozetinden kopmasin.
+_GENISLETME_CEZASI = 1e-4
+
 
 def _is_overview(doc: Document) -> bool:
     """Korpus konvansiyonu: '... Listesi' başlıklı bölümler yalnızca başlıkları sayar."""
@@ -108,19 +113,37 @@ async def _expand_overviews(kept: list[Document]) -> list[Document]:
     satırlık başlık tekrarına düşer. Modelin takip sorgusu atmasına güvenmek
     gpt-4o-mini ile güvenilir olmadığı için genişletme burada deterministik yapılır.
     """
-    sources = {d.metadata.get("source") for d in kept if _is_overview(d)}
-    sources.discard(None)
-    if not sources:
+    ozet_skoru: dict[str, float] = {}
+    for d in kept:
+        if _is_overview(d) and (src := d.metadata.get("source")):
+            ozet_skoru[src] = max(ozet_skoru.get(src, 0.0),
+                                  d.metadata.get("rerank_score") or 0.0)
+    if not ozet_skoru:
         return kept
 
     seen = {(d.metadata.get("source"), d.metadata.get("chunk_index")) for d in kept}
     expanded = list(kept)
-    for source in sorted(sources):
-        for doc in await asyncio.to_thread(_fetch_source, source):
+    for source in sorted(ozet_skoru):
+        for sira, doc in enumerate(await asyncio.to_thread(_fetch_source, source)):
             key = (doc.metadata.get("source"), doc.metadata.get("chunk_index"))
-            if key not in seen:
-                seen.add(key)
-                expanded.append(doc)
+            if key in seen:
+                continue
+            seen.add(key)
+            # Genisleyen bolum, kendisini getiren OZETIN skorunu miras alir: eslesen
+            # sey ozetti ve detaylar onun devami. Ustune sirasiyla artan kuculuk bir
+            # ceza binerek belge sirasi korunuyor.
+            #
+            # Olculdu (2026-08-27): eskiden genisleyenler listenin SONUNA skorsuz
+            # ekleniyordu ve "Yasin'in projeleri nelerdir?" sorusunda uc proje
+            # chunk'i 8-9-10. sirada, "Hobiler" ve "Uctan Uca Sorumluluk"un ALTINDA
+            # kaliyordu. Cevap 328 karakterdi.
+            doc.metadata = {**doc.metadata,
+                            "rerank_score": ozet_skoru[source] - _GENISLETME_CEZASI * (sira + 1),
+                            "expanded_from": source}
+            expanded.append(doc)
+    # Skora gore yeniden siralama: hali hazirda skor sirasinda olan kept degismez,
+    # genisleyenler kendi ozetlerinin hemen ardina oturur.
+    expanded.sort(key=lambda d: -(d.metadata.get("rerank_score") or 0.0))
     return expanded
 
 
@@ -147,17 +170,35 @@ def _record_trace(query: str, reranked: list[Document], kept: list[Document],
     trace = retrieval_trace.get()
     if trace is None:
         return
+    # `context` MODELE GERCEKTEN GIDEN liste. Eskiden burada `results` vardi ve
+    # rerank ciktisini yaziyordu — yani genisletmeyle eklenen chunk'lar ize HIC
+    # dusmuyordu. Olculdu: 41 aramanin 25'inde genisletme calismis ve toplam 50
+    # chunk loglanmadan modele gitmis. Yani retrieval'i debug ederken elimizdeki
+    # kayit, modelin gordugu seyi yansitmiyordu.
+    #
+    # Elenenler ayri anahtarda kaliyor: "bu chunk neden gelmedi" sorusunun cevabi
+    # orada ve onu kaybetmek istemiyoruz. Onizleme yok, skor yeter.
+    kept_anahtarlari = {id(d) for d in kept}
     trace.append({
         "query": query,
-        "results": [
+        "context": [
             {
                 "source": d.metadata.get("source"),
                 "headers": d.metadata.get("headers"),
                 "similarity": d.metadata.get("similarity"),
                 "rerank_score": d.metadata.get("rerank_score"),
+                "expanded": bool(d.metadata.get("expanded_from")),
                 "preview": d.page_content[:120],
             }
-            for d in reranked
+            for d in kept
+        ],
+        "elenen": [
+            {
+                "source": d.metadata.get("source"),
+                "headers": d.metadata.get("headers"),
+                "rerank_score": d.metadata.get("rerank_score"),
+            }
+            for d in reranked if id(d) not in kept_anahtarlari
         ],
         "kept": len(kept),
         "cutoff": round(cutoff, 4),

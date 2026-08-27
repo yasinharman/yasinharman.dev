@@ -259,3 +259,21 @@ async def test_proje_cevabinda_is_deneyimi_rozeti_olmaz(soru):
     rozetler = [m.group(1) for ln in answer.splitlines()
                 if (m := ROZET_RE.match(ln)) and ANLAMLI_RE.search(m.group(1))]
     assert not rozetler, f"proje cevabında iş deneyimi rozeti var: {rozetler}"
+
+
+async def test_projeleri_anlat_detaylari_da_verir():
+    """Regresyon (2026-08-27): `_expand_overviews` ile gelen proje detayları
+    listenin SONUNA skorsuz ekleniyordu; "Yasin'in projeleri nelerdir?" sorgusunda
+    üç proje chunk'ı 8-9-10. sırada, "Hobiler"in bile altında kalıyordu ve cevap
+    328 karakterlik bir başlık tekrarına düşüyordu. Genişleyen bölümler artık
+    özetin skorunu miras alıyor ve hemen ardında sıralanıyor."""
+    answer, _trace = await _ask("Yasin'in projelerinden bahset")
+
+    for ad in ("internship tracker", "business data finder", "asistan"):
+        assert ad in answer, f"proje adı cevapta yok ({ad}): {answer!r}"
+
+    teknolojiler = [t for t in ("scrapy", "serpapi", "langchain", "fastapi", "n8n")
+                    if t in answer]
+    assert len(teknolojiler) >= 2, (
+        f"özet tekrarlanmış, detaylar gelmemiş — bulunan teknoloji: {teknolojiler}")
+    assert len(answer) > 800, f"cevap yine başlık tekrarına düşmüş ({len(answer)} karakter)"
