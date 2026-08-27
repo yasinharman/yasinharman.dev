@@ -15,14 +15,15 @@ import json
 import structlog
 
 from .db import persistence_enabled, pool
+from .version import prompt_version
 
 log = structlog.get_logger()
 
 _INSERT = """
     INSERT INTO chat_logs
       (session_id, status, reason, user_message, ai_response, latency_ms,
-       retrieval, route, timings)
-    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb)
+       retrieval, route, timings, prompt_version)
+    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb, $10)
 """
 
 _REASON_MAX_LEN = 300
@@ -41,9 +42,11 @@ async def _write(status: str, session_id: str, reason: str | None, user_message:
         return
     try:
         async with pool().acquire() as conn:
+            # prompt_version cagiranlardan gelmiyor: her satirda dogru olmasi
+            # gereken bir gercek, unutulabilecek bir parametre degil.
             await conn.execute(_INSERT, session_id, status, reason, user_message,
                                ai_response, latency_ms, _js(retrieval), _js(route),
-                               _js(timings))
+                               _js(timings), prompt_version())
     except Exception:
         # Log yazamamak cevabı iptal etmek için yeterli bir sebep değil: kullanıcı
         # elindeki cevabı almalı. Sessiz kalmıyoruz, structlog'a düşüyor.

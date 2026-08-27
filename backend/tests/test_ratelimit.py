@@ -124,8 +124,9 @@ def test_client_ip_istemci_yoksa_patlamaz():
 
 
 class _SahteAgent:
-    async def ainvoke(self, _payload):
-        return {"output": "cevap"}
+    async def astream_events(self, _payload, version=None):
+        yield {"event": "on_chat_model_stream",
+               "data": {"chunk": type("P", (), {"content": "cevap"})()}}
 
 
 async def test_chat_route_limit_asiminda_429_ve_retry_after_doner(monkeypatch):
