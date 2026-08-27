@@ -15,7 +15,11 @@ def supabase_client() -> Client:
 @lru_cache
 def embeddings() -> OpenAIEmbeddings:
     s = get_settings()
-    return OpenAIEmbeddings(model=s.OPENAI_EMBED_MODEL, api_key=s.OPENAI_API_KEY)
+    # dimensions ZORUNLU: 3-large varsayilan olarak 3072 boyut dondurur ve
+    # vector(1536) kolonuna yazilamaz. Kisaltma modelin kendi ozelligi, sonradan
+    # kirpma degil — olcumde 3072'den daha iyi sonuc verdi (bkz. config.py).
+    return OpenAIEmbeddings(model=s.OPENAI_EMBED_MODEL, api_key=s.OPENAI_API_KEY,
+                            dimensions=s.OPENAI_EMBED_DIM)
 
 
 # Rol basina ayri LLM: router'in isi siniflandirma, cevap uretmek degil. Yaraticilik
