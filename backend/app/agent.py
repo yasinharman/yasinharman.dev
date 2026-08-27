@@ -4,13 +4,14 @@ System prompt, orijinal n8n AI Agent node'undaki prompt'tan taşındı; bilgi
 içeriği artık prompt'ta değil backend/data/ korpusunda yaşar (bkz. ingest.py).
 """
 from functools import lru_cache
+
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.tools import Tool
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 from .deps import chat_llm
 from .retriever import search as kb_search
-
 
 SYSTEM_PROMPT = """# İLK ADIM — İSTİSNASIZ
 

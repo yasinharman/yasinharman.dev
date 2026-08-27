@@ -1,6 +1,8 @@
 from functools import lru_cache
-from supabase import create_client, Client
+
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from supabase import Client, create_client
+
 from .config import get_settings
 
 

@@ -1,0 +1,59 @@
+# Gerçek OpenAI + Cohere + Supabase çağrısı yapan her şey burada toplanır.
+#
+# Neden push'ta değil: para harcıyor ve model çıktısı deterministik değil, her
+# push'ta koşarsa hem fatura hem gürültü üretir.
+#
+# Neden fixture/replay değil: 2026-08-26'da integration testleri üç gerçek bug
+# yakaladı (uydurma e-posta adresi, "how?"un selamlama sanılması, projelerin
+# istihdam rozetiyle görünmesi). Üçü de modelin ne yaptığıyla ilgiliydi;
+# kaydedilmiş skorlarla replay edilseler hiçbiri yakalanamazdı. Bu testlerin
+# değeri tam olarak gerçek olmalarında — o yüzden gerçek kalıyorlar.
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # UTC 03:00
+  workflow_dispatch:
+
+jobs:
+  gercek-api:
+    runs-on: ubuntu-latest
+    env:
+      # MODE=local KRİTİK: prod chat_logs / chat_messages tablolarına tek satır
+      # yazılmasın. Eval trafiği gerçek kullanıcı trafiğine karışırsa "bu soru
+      # canlıda mı soruldu" sorusunu bir daha DB'den cevaplayamayız.
+      MODE: local
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      # Settings'te zorunlu alan ama eval hiçbir admin endpoint'ine dokunmuyor;
+      # gerçek anahtarı CI'a taşımanın sebebi yok.
+      ADMIN_API_KEY: nightly-kullanilmiyor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Bağımlılıklar
+        run: pip install -e "./backend[dev]"
+
+      - name: Integration testleri
+        working-directory: backend
+        run: pytest -m integration -q -rs
+
+      # 42 vaka, hepsi ya canlı chat_logs trafiğinden ya canlı probe'dan geldi.
+      # Eşik yok, tam puan bekleniyor: her vaka bir kez gerçekten kırıktı.
+      - name: Routing eval (42 vaka)
+        if: always()
+        working-directory: backend
+        run: python -m eval.run_routing
+
+      - name: Retrieval golden set (30 vaka)
+        if: always()
+        working-directory: backend
+        run: python -m eval.run_eval --min-rate 0.85

@@ -129,7 +129,7 @@ async def test_baglam_takip_sorusu_iletisim_bilgisi_verir():
     ilk_cevap = await _turn(ilk_soru, [])
     history = [HumanMessage(content=ilk_soru), AIMessage(content=ilk_cevap)]
 
-    answer, trace = await _ask("nasıl geçicem?", history=history)
+    answer, _trace = await _ask("nasıl geçicem?", history=history)
     assert "eğitildim" not in answer, (
         f"bağlama bağlı takip sorusu yanlışlıkla kapsam-dışı reddedildi: {answer!r}")
     assert any(s in answer for s in ["contact@yasinharman.dev", "linkedin", "upwork"]), (

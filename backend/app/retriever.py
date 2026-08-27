@@ -17,7 +17,7 @@ import structlog
 from langchain_core.documents import Document
 
 from .config import Settings, get_settings
-from .deps import supabase_client, embeddings
+from .deps import embeddings, supabase_client
 from .retry import external_retry
 
 retrieval_trace: ContextVar[list[dict] | None] = ContextVar("retrieval_trace", default=None)
@@ -170,7 +170,7 @@ async def search(query: str) -> list[Document]:
     try:
         reranked = await asyncio.to_thread(_rerank, query, docs, s.RERANK_TOP_N)
         kept, cutoff = _apply_cutoff(reranked, s)
-    except Exception:
+    except Exception:  # noqa: BLE001 — bilinçli: rerank'in HER hatası degraded moda düşmeli
         # Cohere erişilemezse tamamen kör kalma: similarity sırasıyla devam et.
         # Degraded mod — rerank floor uygulanamaz, alakasız chunk sızabilir.
         structlog.get_logger().warning("rerank_failed_fallback", query=query[:80])

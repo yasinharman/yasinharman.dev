@@ -15,15 +15,15 @@ import argparse
 import asyncio
 import hashlib
 import os
-from datetime import datetime, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
 
 from langchain_core.documents import Document
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
 from .config import Settings, get_settings
-from .deps import supabase_client, embeddings
+from .deps import embeddings, supabase_client
 from .retry import external_retry
 
 # Bilgi tabaninin kok dizini. /admin/ingest-path yalnizca bunun altini kabul eder
@@ -78,7 +78,7 @@ def _iter_files(root: Path) -> Iterable[Path]:
 
 def _finalize(chunks: list[tuple[str, list[str]]], source: str) -> list[Document]:
     """(text, header_path) çiftlerini ortak metadata şemasıyla Document'a çevirir."""
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     docs: list[Document] = []
     for i, (text, headers) in enumerate(chunks):
         docs.append(Document(
@@ -165,9 +165,11 @@ _INSERT_BATCH = 100
 async def sync_source(source: str, docs: list[Document]) -> int:
     """Kaynağın eski chunk'larını silip yenilerini yazar (idempotent)."""
     vectors = await asyncio.to_thread(_embed_texts, [d.page_content for d in docs])
+    # strict=True: embedding sayisi chunk sayisiyla uyusmazsa sessizce kirpmak yerine
+    # patlasin — kisa donen bir embedding cevabi korpusun kuyrugunu yazmadan gecerdi.
     rows = [
         {"content": d.page_content, "metadata": d.metadata, "embedding": v}
-        for d, v in zip(docs, vectors)
+        for d, v in zip(docs, vectors, strict=True)
     ]
     await asyncio.to_thread(_delete_source, source)
     for i in range(0, len(rows), _INSERT_BATCH):

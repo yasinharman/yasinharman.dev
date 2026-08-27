@@ -1,15 +1,17 @@
 import time
+
 import structlog
 from fastapi import APIRouter, HTTPException, Request
-from ..schemas import ChatRequest, ChatResponse
-from ..config import get_settings
-from ..memory import get_history, append_message
-from ..guards import input_guard, output_guard, blocked_user_message, error_user_message
+
 from ..agent import agent_executor, initial_context
-from ..logging_db import log_blocked, log_allowed, log_error
+from ..config import get_settings
+from ..guards import blocked_user_message, error_user_message, input_guard, output_guard
+from ..logging_db import log_allowed, log_blocked, log_error
+from ..memory import append_message, get_history
 from ..ratelimit import client_ip, get_limiter
-from ..router import classify, courtesy_reply, scope_reply
 from ..retriever import retrieval_trace
+from ..router import classify, courtesy_reply, scope_reply
+from ..schemas import ChatRequest, ChatResponse
 
 log = structlog.get_logger()
 router = APIRouter()

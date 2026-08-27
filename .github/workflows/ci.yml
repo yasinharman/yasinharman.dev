@@ -1,0 +1,73 @@
+# Her push'ta koşan hızlı kapı: para harcamaz, anahtar istemez, ~1 dakika.
+#
+# Anahtar gerektiren her şey bilerek dışarıda (bkz. nightly.yml). Bu ayrım
+# 2.1'in varlık sebebi: testler "anahtar yoksa skip" deseniyle yazılmıştı ve
+# CI'da her şey sessizce skip olurdu — yani koruma sıfırken yeşil görünürdü.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# Aynı dalda arka arkaya push atılırsa eskisini iptal et; son hali önemli.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # Dockerfile ile aynı
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Bağımlılıklar
+        run: pip install -e "./backend[dev]"
+
+      - name: Ruff
+        working-directory: backend
+        run: ruff check app tests eval
+
+      # Ortama BİLEREK hiçbir anahtar verilmiyor: bu suite'in gerçekten ağsız
+      # olduğunun tek kanıtı, anahtarsız bir makinede yeşil olması. .env de
+      # yok, o yüzden conftest sahte değerleri yazar.
+      - name: Offline suite
+        working-directory: backend
+        run: |
+          set -o pipefail
+          pytest -m "not integration" -q -rs | tee "$RUNNER_TEMP/pytest.txt"
+          # Skip = görünmez çürüme. Bu maddenin çözdüğü bug tam olarak buydu,
+          # o yüzden tekrar oluşamasın diye hata sayılıyor.
+          if grep -qE '[0-9]+ skipped' "$RUNNER_TEMP/pytest.txt"; then
+            echo "::error::Offline suite'te skip var — bunlar CI'da koşmak zorunda."
+            exit 1
+          fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Bağımlılıklar
+        working-directory: frontend
+        run: npm ci
+
+      # Lint yok: package.json'da bir `lint` script'i duruyor ama eslint ne
+      # bağımlılıklarda ne de konfigürasyonda var — çalıştırılamıyor.
+      # Build yine de değerli: cevap render'ı (MessageBody.jsx) JSX ve bozuk
+      # import hatalarını buradan başka hiçbir yerde yakalamıyoruz.
+      - name: Build
+        working-directory: frontend
+        run: npm run build

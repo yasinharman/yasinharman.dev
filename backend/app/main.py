@@ -1,15 +1,15 @@
 import logging
 import warnings
+from contextlib import asynccontextmanager
 
 import structlog
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .db import init_pool, close_pool, persistence_enabled
-from .routes.chat import router as chat_router
+from .db import close_pool, init_pool, persistence_enabled
 from .routes.admin import router as admin_router
+from .routes.chat import router as chat_router
 
 
 def _silence_third_party_warnings() -> None:
