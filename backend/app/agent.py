@@ -3,6 +3,7 @@
 System prompt, orijinal n8n AI Agent node'undaki prompt'tan taşındı; bilgi
 içeriği artık prompt'ta değil backend/data/ korpusunda yaşar (bkz. ingest.py).
 """
+from datetime import date
 from functools import lru_cache
 
 from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -73,6 +74,9 @@ Takip soruları da senden önce çözülüp tam soruya çevrildi.
 - Yasin'in bilgilerinde açıkça yer almayan hiçbir teknoloji, deneyim, sertifika veya
   başarıyı uydurma. Spesifik yıl, proje adı, şirket, rakam uydurmak YASAKTIR.
 - Bilmediğin bir konuda: en yakın GERÇEK deneyimle dürüst bir köprü kur.
+- SÜRE HESABI: bugünün tarihi sana her turda veriliyor; "Günümüz" ifadesini onunla
+  çöz, başka bir yıl VARSAYMA. Toplam deneyimin nasıl hesaplandığı bilgi tabanında
+  yazıyor — kendi kuralını uydurma, oradaki tanımı uygula.
 
 ---
 
@@ -242,15 +246,24 @@ async def initial_context(kb_query: str) -> list[SystemMessage]:
     Artik en az bir retrieval garanti. Tool yine de agent'in elinde: ilk sonuc
     yetersizse farkli ifadelerle yeniden arayabilir. Kod bir taban sagliyor,
     modelin yeteneklerini kisitlamiyor.
+
+    Tur baglaminin ikinci parcasi bugunun tarihi. Korpus "Mayis 2026 - Gunumuz"
+    diyor; modelin "gunumuz"un ne oldugunu bilmesinin baska yolu yok ve bilmeyince
+    UYDURUYOR: 2026-08-27'de "kac yillik deneyim" sorusuna "2023 itibariyla ~1 yil
+    6 ay" cevabi geldi — hicbir kaynakta olmayan bir yila demirleyerek. Tarih
+    SYSTEM_PROMPT'a degil buraya konuyor cunku agent_executor lru_cache'li:
+    prompt'a gomulseydi surec ne kadar ayakta kalirsa tarih o kadar eskirdi.
     """
+    mesajlar = [SystemMessage(content=f"Bugunun tarihi: {date.today().isoformat()}.")]
     if not kb_query:
-        return []
+        return mesajlar
     docs = await kb_search(kb_query)
-    return [SystemMessage(content=(
+    mesajlar.append(SystemMessage(content=(
         "Asagidaki bolumler kullanicinin sorusu icin bilgi tabanindan ZATEN getirildi. "
         "Cevabini bunlara dayandir. Yetersizse portfolio_kb'yi farkli bir ifadeyle "
         "yeniden cagirabilirsin.\n\n" + _format_docs(docs)
-    ))]
+    )))
+    return mesajlar
 
 
 def _kb_search_sync(query: str) -> str:

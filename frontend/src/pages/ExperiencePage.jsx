@@ -62,7 +62,7 @@ const EXPERIENCE_DATA = [
     logo: upworkLogo,
     role: { tr: 'AI Engineer', en: 'AI Engineer' },
     type: { tr: 'Freelance', en: 'Freelance' },
-    period: { tr: 'Mayıs 2025 – Günümüz', en: 'May 2025 – Present' },
+    period: { tr: 'Mayıs 2026 – Günümüz', en: 'May 2026 – Present' },
     link: 'https://www.upwork.com/freelancers/~013fbee1828b285d61',
     highlights: {
       tr: [
