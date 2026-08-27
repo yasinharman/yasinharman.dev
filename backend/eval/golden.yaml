@@ -95,6 +95,25 @@
   question: "Yasin nerede yaşıyor?"
   expected_substrings: ["İstanbul"]
 
+# --- Regresyon: bulgu B (2026-08-27) ---
+# "Yetenekler > Teknolojiler ve Araçlar" chunk'ı vector aramada 3. sırada geliyor
+# ama Cohere rerank'te 0.0055 alıp eşiğin (0.40) çok altında eleniyordu. Sebep sıra
+# değil BİÇİM: chunk özne ve fiil içermeyen çıplak bir "X — tanım" listesiydi.
+# Ölçüldü: aynı içeriğe tek cümlelik özneli bir giriş eklenince skor 0.0055 → 1.0000.
+#
+# Bu vakalar expected_all kullanıyor, expected_sources DEĞİL: eski biçimde
+# "yetenekler.md'den bir şey geldi mi" sorusu, doğru chunk elenmişken bile
+# yeşil kalıyordu — bug tam bu yüzden 30/30'luk golden set'ten kaçtı.
+- id: yetenek-teknolojiler-biliyor
+  question: "Yasin hangi teknolojileri biliyor?"
+  expected_all: ["Dokploy", "SQLAlchemy", "Streamlit"]
+- id: yetenek-docker-biliyor-mu
+  # Beklenti bilerek tam madde metni: ilk denemede ["Docker", "containerization"]
+  # yazmistim ve vaka YESIL dondu — ikisi hakkimda.md'nin duz yazi chunk'inda da
+  # gecıyor, yani teknoloji listesi yine elenmisken test gecmis oluyordu.
+  question: "Yasin Docker biliyor mu?"
+  expected_all: ["Docker — containerization", "SQLAlchemy ORM"]
+
 # --- Negatifler: eşik üstü sonuç dönmemeli ---
 - id: neg-maas
   question: "Yasin'in maaş beklentisi nedir?"

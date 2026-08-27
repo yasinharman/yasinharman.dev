@@ -28,11 +28,19 @@ def load_golden() -> list[dict]:
 def is_hit(entry: dict, docs) -> bool:
     if entry.get("negative"):
         return len(docs) == 0
+    blob = "\n".join(d.page_content for d in docs).lower()
+
+    # expected_all: HEPSI bulunmali. expected_sources/expected_substrings'in aksine
+    # bu, belirli bir CHUNK'i sabitler. Gerekcesi olculdu (2026-08-27): yetenekler.md
+    # 5 chunk'a bolunuyor ve "kaynak yetenekler.md mi" testi, dogru chunk elenmisken
+    # bile yesil kaliyordu — bulgu B tam bu yuzden golden set'ten kacmisti.
+    if gerekli := entry.get("expected_all"):
+        return all(sub.lower() in blob for sub in gerekli)
+
     sources = {d.metadata.get("source") for d in docs}
     if any(s in sources for s in entry.get("expected_sources", [])):
         return True
-    blob = "\n".join(d.page_content for d in docs)
-    return any(sub.lower() in blob.lower() for sub in entry.get("expected_substrings", []))
+    return any(sub.lower() in blob for sub in entry.get("expected_substrings", []))
 
 
 async def run(min_rate: float) -> int:

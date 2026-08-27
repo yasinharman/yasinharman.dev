@@ -7,6 +7,8 @@
 
 ## Teknolojiler ve Araçlar
 
+Yasin'in bildiği ve projelerinde aktif olarak kullandığı teknolojiler ve araçlar şunlardır:
+
 - n8n — otomasyon ve iş akışı platformu
 - Docker — containerization
 - Dokploy ve Coolify — deployment yönetimi
