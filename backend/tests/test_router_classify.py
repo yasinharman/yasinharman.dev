@@ -81,7 +81,7 @@ async def test_classify_route_dondurur(sahte_llm):
 def test_prompt_kritik_kurallari_tasir():
     """Bunlar canlıda görülmüş hatalardan çıkarılmış kurallar; prompt yeniden
     yazılırken sessizce düşerlerse eval'e kadar fark edilmez."""
-    p = router_mod._ROUTER_PROMPT
+    p = router_mod.ROUTER_PROMPT
     assert "Business Data Finder" in p, "çıplak proje adı kuralı düştü"
     assert "YAZIM HATASI" in p, "yazım hatası kuralı düştü"
     assert "İLETİŞİM BİLGİLERİ" in p, "iletişim bilgisi career kuralı düştü"

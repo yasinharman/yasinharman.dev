@@ -124,7 +124,7 @@ def courtesy_reply(message: str, lang: str = "tr") -> str | None:
 # LLM sınıflandırma (FAZ 3.1)
 # ---------------------------------------------------------------------------
 
-_ROUTER_PROMPT = """Sen bir SINIFLANDIRICISIN. Cevap ÜRETMİYORSUN.
+ROUTER_PROMPT = """Sen bir SINIFLANDIRICISIN. Cevap ÜRETMİYORSUN.
 
 Yasin Harman'ın portfolyo asistanına gelen mesajı üç alana ayırıyorsun.
 
@@ -240,7 +240,7 @@ async def classify(message: str, history: list[BaseMessage] | None = None) -> Ro
     """Mesajı sınıflandırır. Tek LLM çağrısı, structured output, temperature=0."""
     llm = router_llm().with_structured_output(Route, method="json_schema", strict=True)
     return await llm.ainvoke([
-        SystemMessage(content=_ROUTER_PROMPT),
+        SystemMessage(content=ROUTER_PROMPT),
         HumanMessage(content=(
             f"# KONUŞMA GEÇMİŞİ\n{_gecmis_metni(history)}\n\n"
             f"# SINIFLANDIRILACAK YENİ MESAJ\n{message}"
