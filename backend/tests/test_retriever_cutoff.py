@@ -77,5 +77,32 @@ def test_trace_esigi_ve_bos_sonucu_kaydeder():
     assert kayit["query"] == "hobiler"
     assert kayit["cutoff"] == get_settings().RERANK_SCORE_THRESHOLD
     assert kayit["kept"] == 0
-    assert len(kayit["results"]) == 2, "elenenler de ize düşmeli, debug için"
+    assert kayit["context"] == [], "modele hiçbir chunk gitmedi, iz de öyle demeli"
+    assert len(kayit["elenen"]) == 2, "elenenler ayrı anahtarda kalmalı, debug için"
     assert kayit["duration_ms"] == 42, "arama süresi çağrı başına kaydedilmeli"
+
+
+async def test_iz_modele_giden_listeyi_yazar():
+    """Regresyon: iz `reranked`i yazıyordu, yani genişletmeyle eklenen chunk'lar
+    hiç loglanmıyordu. Ölçüldü — 41 aramanın 25'inde genişletme çalışmış ve 50
+    chunk kayıt dışı modele gitmişti. Retrieval'ı debug ederken elimizdeki kayıt
+    modelin gördüğünü yansıtmıyordu."""
+    from langchain_core.documents import Document
+
+    trace: list[dict] = []
+    retrieval_trace.set(trace)
+    try:
+        reranked = _docs(0.95, 0.80, 0.10)
+        kept, cutoff = _apply_cutoff(reranked, get_settings())
+        genisleyen = Document(page_content="Detay bölümü", metadata={
+            "source": "projeler.md", "rerank_score": 0.9499, "expanded_from": "projeler.md"})
+        _record_trace("projeler", reranked, [*kept, genisleyen], cutoff, 7)
+    finally:
+        retrieval_trace.set(None)
+
+    kayit, = trace
+    assert kayit["kept"] == 3
+    assert len(kayit["context"]) == 3, "genişleyen chunk da ize girmeli"
+    assert kayit["context"][-1]["expanded"] is True
+    assert [c["expanded"] for c in kayit["context"][:2]] == [False, False]
+    assert len(kayit["elenen"]) == 1, "eşik altı kalan ayrı anahtarda"
