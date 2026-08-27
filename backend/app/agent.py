@@ -211,18 +211,39 @@ _LANGUAGE_REMINDER = {
 }
 
 
-def _system_prompt(lang: str) -> str:
-    return SYSTEM_PROMPT + _LANGUAGE_DIRECTIVE.get(lang, "")
+# SYSTEM_PROMPT'un ilk bolumu ("cevap yazmadan once tool'u cagir") yalnizca tool'lu
+# yolda gecerli. Tool'suz yolda modeli olmayan bir araca yonlendirmek zararli, o
+# yuzden ilk bolum degistiriliyor; geri kalan her sey (rol, durustluk, bicim,
+# yasaklar) tek kaynaktan geliyor — iki prompt kopyasi tutmak, birini guncelleyip
+# digerini unutmanin garantisi olurdu.
+_BOLUM_SONU = SYSTEM_PROMPT.index("---\n\n# ROL VE AMAÇ")
+
+_ARACSIZ_ILK_ADIM = """# ELİNDEKİ BİLGİ
+
+Sorunun bilgi tabanından getirilen bölümleri aşağıda SANA VERİLDİ; arama zaten
+yapıldı. Cevabını YALNIZCA o bölümlere dayandır.
+
+Aradığın bilgi verilen bölümlerde yoksa uydurma ve konuya yakın başka bilgiyle
+doldurma; bilginin elinde olmadığını dürüstçe söyle.
+
+"""
 
 
-def _prompt_messages(lang: str) -> list:
-    msgs: list = [("system", _system_prompt(lang)),
+def _system_prompt(lang: str, arac_var: bool = True) -> str:
+    govde = SYSTEM_PROMPT if arac_var else _ARACSIZ_ILK_ADIM + SYSTEM_PROMPT[_BOLUM_SONU:]
+    return govde + _LANGUAGE_DIRECTIVE.get(lang, "")
+
+
+def _prompt_messages(lang: str, arac_var: bool = True) -> list:
+    msgs: list = [("system", _system_prompt(lang, arac_var)),
                   MessagesPlaceholder("history", optional=True),
                   MessagesPlaceholder("context", optional=True)]
     if reminder := _LANGUAGE_REMINDER.get(lang, ""):
         # TR'de hic eklenmez: Turkce mesaj zinciri bit bit ayni kalir.
         msgs.append(("system", reminder))
-    msgs += [("human", "{input}"), MessagesPlaceholder("agent_scratchpad")]
+    msgs += [("human", "{input}")]
+    if arac_var:
+        msgs.append(MessagesPlaceholder("agent_scratchpad"))
     return msgs
 
 
@@ -273,6 +294,40 @@ def _kb_search_sync(query: str) -> str:
 
 
 @lru_cache
+@lru_cache
+def answer_chain(lang: str = "tr"):
+    """Tool'suz cevap yolu — ilk retrieval sonuc dondurdugunde kullanilir.
+
+    Uretim verisi (82 tur, 2026-08-27): turlarin 8'i IKI arama yapmis ve
+    sekizinde de ikinci sorgu ya birincinin AYNISI ya parafrazi; hicbirinde yeni
+    chunk gelmemis. Maliyeti tur basina 1.5-3.8 saniye — hem de en yavas turlarda.
+    Sebep modelin kotu karar vermesi degil: elinde tool var, prompt "yetersizse
+    yeniden dene" diyor ve yeterli olup olmadigini bilmesinin bir yolu yok.
+
+    Karar koda alindi. Ilk retrieval chunk dondurduyse cevap tek LLM cagrisiyla
+    uretiliyor; tool hic ortada olmadigi icin ikinci arama YAPILAMIYOR.
+    kept == 0 ise (90 aramanin 2'si) agent_executor'a dusuluyor; orada model
+    sorguyu yeniden ifade edip arayabiliyor. Yani "yeniden ara" yolu duruyor,
+    yalnizca gercekten gerektiginde calisiyor.
+    """
+    prompt = ChatPromptTemplate.from_messages(_prompt_messages(lang, arac_var=False))
+    return prompt | chat_llm()
+
+
+def select_runner(bulunan: int, lang: str = "tr"):
+    """Ilk retrieval'in dondurdugu chunk sayisina gore cevap yolunu secer.
+
+    Tek yerde duruyor cunku uc ayri cagiran var — /chat route'u, integration
+    testleri ve eval kosuculari — ve bunlarin AYNI yolu olcmesi sart. Ayri ayri
+    secerlerse eval, kullanicinin hic gormedigi bir kod yolunu olcmus olur.
+    """
+    return answer_chain(lang) if bulunan else agent_executor(lang)
+
+
+def kept_sayisi(trace: list[dict] | None) -> int:
+    return sum(k.get("kept", 0) for k in (trace or []))
+
+
 def agent_executor(lang: str = "tr") -> AgentExecutor:
     kb_tool = Tool(
         name="portfolio_kb",

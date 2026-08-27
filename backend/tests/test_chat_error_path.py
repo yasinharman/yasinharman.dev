@@ -32,7 +32,8 @@ class _PatlayanAgent:
 
 @pytest.fixture
 def patlayan_agent(monkeypatch):
-    monkeypatch.setattr("app.routes.chat.agent_executor", lambda lang="tr": _PatlayanAgent())
+    monkeypatch.setattr("app.routes.chat.select_runner",
+                        lambda bulunan, lang="tr": _PatlayanAgent())
 
     # Router gercek bir LLM cagirir; bu testin konusu siniflandirma degil hata yolu.
     async def sahte_classify(message, history=None):

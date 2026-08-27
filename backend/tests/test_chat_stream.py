@@ -40,8 +40,8 @@ def kariyer_yolu(monkeypatch):
 
         monkeypatch.setattr("app.routes.chat.classify", sahte_classify)
         monkeypatch.setattr("app.routes.chat.initial_context", sahte_context)
-        monkeypatch.setattr("app.routes.chat.agent_executor",
-                            lambda lang="tr": _AkanAgent(parcalar))
+        monkeypatch.setattr("app.routes.chat.select_runner",
+                            lambda bulunan, lang="tr": _AkanAgent(parcalar))
     return kur
 
 
@@ -98,3 +98,73 @@ async def test_akissiz_yol_ayni_cevabi_uretir(kariyer_yolu):
     resp = await chat(ChatRequest(message="Yasin ne biliyor?", session_id="s4"), _Istek())
     assert resp.response == "tek parça cevap"
     assert resp.blocked is False
+
+
+# --- ilk retrieval basariliysa ikinci arama YAPILAMAZ ------------------------
+# Üretim verisi (82 tur): 8 turda iki arama yapılmış, sekizinde de ikinci sorgu
+# birincinin aynısı ya da parafrazı; hiçbirinde yeni chunk gelmemiş. Karar artık
+# modelde değil kodda: chunk geldiyse tool ortada yok.
+
+def _izli_kurulum(monkeypatch, kept):
+    from app.retriever import retrieval_trace
+
+    async def sahte_classify(message, history=None):
+        return Route(category="career", resolved_query=message, kb_query=message)
+
+    async def sahte_context(kb_query):
+        iz = retrieval_trace.get()
+        if iz is not None:
+            iz.append({"query": kb_query, "kept": kept, "duration_ms": 10})
+        return []
+
+    gorulen = []
+
+    def sahte_select(bulunan, lang="tr"):
+        gorulen.append(bulunan)
+        return _AkanAgent(["ajan cevabı" if bulunan == 0 else "araçsız cevap"])
+
+    monkeypatch.setattr("app.routes.chat.classify", sahte_classify)
+    monkeypatch.setattr("app.routes.chat.initial_context", sahte_context)
+    monkeypatch.setattr("app.routes.chat.select_runner", sahte_select)
+    return gorulen
+
+
+async def test_yol_secimine_kept_sayisi_gecirilir(monkeypatch):
+    """Route'un görevi kararı vermek değil, doğru sayıyı select_runner'a
+    geçirmek. Kararın kendisi test_runner_secimi'nde ölçülüyor."""
+    gorulen = _izli_kurulum(monkeypatch, kept=8)
+    resp = await chat_stream(ChatRequest(message="Yasin ne biliyor?", session_id="d1"),
+                             _Istek())
+    olaylar = await _olaylar(resp)
+
+    assert gorulen == [8]
+    assert olaylar[-1]["cevap"] == "araçsız cevap"
+    bulundu, = [o for o in olaylar if o.get("asama") == "bulundu"]
+    assert bulundu["adet"] == 8
+
+
+async def test_hic_chunk_yoksa_agent_devreye_girer(monkeypatch):
+    """Yeniden arama yolu kalkmadı, yalnızca gerçekten gerektiğinde çalışıyor:
+    üretimde 90 aramanın 2'si boş döndü."""
+    gorulen = _izli_kurulum(monkeypatch, kept=0)
+    resp = await chat_stream(ChatRequest(message="Yasin ne biliyor?", session_id="d2"),
+                             _Istek())
+    olaylar = await _olaylar(resp)
+
+    assert gorulen == [0], "boş retrieval'da 0 geçmeli — model yeniden arayabilsin"
+    assert olaylar[-1]["cevap"] == "ajan cevabı"
+
+
+def test_runner_secimi():
+    """Kararın kendisi: chunk varsa tool'suz zincir, yoksa agent.
+
+    Üretim verisi (82 tur): 8 turda ikinci bir arama yapılmış ve sekizinde de
+    sorgu birincinin aynısı ya da parafrazıydı — hiçbirinde yeni chunk gelmedi,
+    tur başına 1.5-3.8 saniye harcandı. Boş retrieval ise 90 aramanın 2'sinde
+    oldu; o yol duruyor."""
+    from langchain.agents import AgentExecutor
+
+    from app.agent import select_runner
+
+    assert isinstance(select_runner(0, "tr"), AgentExecutor)
+    assert not isinstance(select_runner(8, "tr"), AgentExecutor)

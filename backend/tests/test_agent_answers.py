@@ -32,7 +32,7 @@ async def _ask(question: str, history: list | None = None, lang: str = "tr") -> 
     testler "reddetmedi" diye düşüyordu — ama kullanıcı o yolu hiç görmüyor.
     Sıra route ile birebir aynı: nezaket → router → agent.
     """
-    from app.agent import agent_executor, initial_context
+    from app.agent import initial_context, kept_sayisi, select_runner
     from app.retriever import retrieval_trace
     from app.router import classify, courtesy_reply, scope_reply
 
@@ -48,9 +48,12 @@ async def _ask(question: str, history: list | None = None, lang: str = "tr") -> 
         return scope_reply(route.category, lang).lower(), trace
 
     context = await initial_context(route.kb_query)
-    result = await agent_executor(lang).ainvoke(
+    # Secim route ile AYNI fonksiyondan geliyor; ayri secseydik testler
+    # kullanicinin hic gormedigi bir yolu olcerdi.
+    result = await select_runner(kept_sayisi(trace), lang).ainvoke(
         {"input": route.resolved_query, "history": history or [], "context": context})
-    return (result.get("output") or "").lower(), trace
+    metin = result["output"] if isinstance(result, dict) else result.content
+    return (metin or "").lower(), trace
 
 
 async def test_hobi_sorusu_cevaplanir():
@@ -113,7 +116,11 @@ async def test_alakasiz_soru_reddedilir():
 
 async def _turn(question: str, history: list, lang: str = "tr") -> str:
     """Ham (küçük harfe çevrilmemiş) cevabı döner — bir sonraki turn'ün
-    history'sinde AIMessage içeriği olarak kullanılmak üzere."""
+    history'sinde AIMessage içeriği olarak kullanılmak üzere.
+
+    Bilerek doğrudan agent: burada `context` hiç verilmiyor, yani bilgiye
+    ulaşmanın tek yolu tool. Bu helper üretim yolunu ölçmüyor, yalnızca bir
+    sonraki tura geçmiş metni üretiyor."""
     from app.agent import agent_executor
 
     result = await agent_executor(lang).ainvoke({"input": question, "history": history})
