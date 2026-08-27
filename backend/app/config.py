@@ -1,12 +1,21 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Mutlak yol, bilerek: env_file goreli verilirse pydantic onu CWD'ye gore cozer.
+# Suite yalnizca backend/ icinden kosarken calisirdi; repo kokunden (ve CI'da)
+# .env bulunamayip zorunlu alanlar eksik kalir, 15 test toplama asamasinda duserdi.
+# Dosya yoksa pydantic sessizce gecer — imajda .env yok, ortam degiskenleri var.
+ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
+    )
 
     OPENAI_API_KEY: str
     OPENAI_CHAT_MODEL: str = "gpt-4o-mini"

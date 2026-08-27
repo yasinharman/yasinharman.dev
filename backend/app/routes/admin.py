@@ -1,8 +1,11 @@
+import contextlib
 import os
 import tempfile
 from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.security import APIKeyHeader
+
 from ..config import get_settings
 from ..ingest import DATA_ROOT, ingest_path
 from ..schemas import IngestPathRequest
@@ -28,10 +31,8 @@ async def ingest_upload(
     try:
         n = await ingest_path(tmp_path, source_label=source or file.filename)
     finally:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
     return {"chunks": n, "filename": file.filename}
 
 

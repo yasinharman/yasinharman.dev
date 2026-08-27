@@ -17,7 +17,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.retriever import search  # noqa: E402
+from app.retriever import search
 
 
 def load_golden() -> list[dict]:

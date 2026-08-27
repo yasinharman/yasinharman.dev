@@ -131,10 +131,9 @@ class _SahteAgent:
 async def test_chat_route_limit_asiminda_429_ve_retry_after_doner(monkeypatch):
     from fastapi import HTTPException
 
+    from app.router import Route
     from app.routes.chat import chat
     from app.schemas import ChatRequest
-
-    from app.router import Route
 
     async def sahte_classify(message, history=None):
         return Route(category="career", resolved_query=message, kb_query=message)

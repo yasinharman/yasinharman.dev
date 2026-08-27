@@ -1,4 +1,5 @@
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+
 from .db import persistence_enabled, pool
 
 

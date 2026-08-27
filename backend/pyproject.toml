@@ -26,7 +26,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "ruff>=0.6",
+  # Ust sinir bilerek: minor bir surum secili gruplara yeni kural ekleyip
+  # kodumuz degismeden CI'i kirabiliyor. Yukseltme bilincli bir adim olsun.
+  "ruff>=0.16,<0.17",
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
   "pyyaml>=6.0",
@@ -42,6 +44,20 @@ include = ["app*"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+# Kural seti bilerek acikca yaziliyor. Ruff'in varsayilan seti surum surum
+# genisliyor; ona guvenirsek bir `pip install -U ruff` CI'i bizim kodumuz hic
+# degismeden kirmizi yapabilir (0.16 tam bunu yapti: 14 yeni hata).
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP", "SIM", "C4", "BLE", "RUF"]
+# RUF001-003: "ambiguous unicode". Korpus, promptlar ve yorumlar Turkce; bu
+# kurallar 676 kez i/ı, s/ş, g/ğ diye bagirip sinyali tamamen bogar.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+# B008 (varsayilan argumanda fonksiyon cagrisi) FastAPI'nin kendi idiyomu:
+# Depends(...) / File(...) / Form(...) tam olarak orada durmak zorunda.
+"app/routes/*.py" = ["B008"]
 
 [tool.pytest.ini_options]
 markers = [

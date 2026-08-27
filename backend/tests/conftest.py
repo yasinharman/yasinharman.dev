@@ -5,9 +5,10 @@ geldiği için, .env varken bunları set etmek integration testlerinin gerçek
 anahtarlarını ezip hepsini 401'e düşürür.
 """
 import os
-from pathlib import Path
 
-if not (Path(__file__).parents[1] / ".env").exists():
+from app.config import ENV_FILE
+
+if not ENV_FILE.exists():
     os.environ.setdefault("OPENAI_API_KEY", "test-key")
     os.environ.setdefault("COHERE_API_KEY", "test-key")
     os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
