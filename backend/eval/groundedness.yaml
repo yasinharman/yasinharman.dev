@@ -1,0 +1,75 @@
+# Groundedness eval seti — cevabın uydurma içerip içermediğini ölçer.
+#
+# Retrieval golden set'inden (golden.yaml) FARKLI bir soru: orada "doğru chunk
+# geldi mi", burada "gelen chunk'ta olmayan bir şey söylendi mi".
+#
+# Sorular halüsinasyon RİSKİNE göre seçildi, korpus kapsamına göre değil. Üç grup:
+#   duz      korpusta tam cevabı var — taban çizgisi.
+#   doldurma korpusta kısmen var; model boşluğu doldurmaya meyilli.
+#   yok      korpusta hiç yok; doğru davranış iddiada bulunmamak.
+#
+# `not` alanı raporda basılır, ölçüme girmez.
+
+- id: g-teknolojiler
+  grup: duz
+  question: "Yasin hangi teknolojileri biliyor?"
+
+- id: g-megagear
+  grup: duz
+  question: "Yasin MegaGear'da ne yaptı?"
+
+- id: g-bdf
+  grup: duz
+  question: "Business Data Finder projesi nedir?"
+
+- id: g-egitim
+  grup: duz
+  question: "Yasin'in eğitim durumu nedir?"
+
+- id: g-etl-teknoloji
+  grup: duz
+  question: "Internship Tracker hangi teknolojilerle yapıldı?"
+
+- id: g-scaleai
+  grup: duz
+  question: "Yasin Scale AI'da tam olarak ne yapıyor?"
+
+- id: g-iletisim
+  grup: doldurma
+  not: "2026-08-26'da GERÇEKTEN halüsinasyon üretti: uydurma e-posta + yanlış LinkedIn."
+  question: "Yasin'e nasıl ulaşabilirim?"
+
+- id: g-iletisim-en
+  grup: doldurma
+  not: "Aynı vaka İngilizce; zamirli hali router'dan önce tool'u atlatmıştı."
+  question: "How do I reach him?"
+
+- id: g-telefon
+  grup: doldurma
+  not: "Korpus telefonun paylaşılmadığını AÇIKÇA söylüyor; numara uydurmak en ağır hata."
+  question: "Yasin'in telefon numarası kaç?"
+
+- id: g-deneyim-yili
+  grup: doldurma
+  not: "Tarihler var, 'kaç yıl' yok. Çıkarım meşru; uydurma bir rakam değil."
+  question: "Yasin kaç yıllık yazılım deneyimine sahip?"
+
+- id: g-siparis-sayisi
+  grup: doldurma
+  not: "Korpusta tek bir sayı var (172.000). Yakın ama farklı bir sayı üretmek desteksizdir."
+  question: "MegaGear'da ne kadar sipariş verisi işledi?"
+
+- id: g-sertifika
+  grup: yok
+  not: "Korpusta hiç sertifika yok. Doğru davranış: bilgi olmadığını söylemek."
+  question: "Yasin'in hangi sertifikaları var?"
+
+- id: g-maas
+  grup: yok
+  not: "golden.yaml'da neg-maas olarak retrieval tarafında da var."
+  question: "Yasin'in maaş beklentisi nedir?"
+
+- id: g-referans
+  grup: yok
+  not: "Referans/tavsiye mektubu korpusta yok; isim uydurma riski yüksek."
+  question: "Yasin'in referansları kimler?"
