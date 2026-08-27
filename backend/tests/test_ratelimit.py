@@ -141,7 +141,8 @@ async def test_chat_route_limit_asiminda_429_ve_retry_after_doner(monkeypatch):
 
     limiter = RateLimiter(per_min=20, per_day=100)
     monkeypatch.setattr("app.routes.chat.get_limiter", lambda: limiter)
-    monkeypatch.setattr("app.routes.chat.agent_executor", lambda lang="tr": _SahteAgent())
+    monkeypatch.setattr("app.routes.chat.select_runner",
+                        lambda bulunan, lang="tr": _SahteAgent())
     # Router gercek LLM cagirir; bu test hiz limitini olcuyor, siniflandirmayi degil.
     monkeypatch.setattr("app.routes.chat.classify", sahte_classify)
 

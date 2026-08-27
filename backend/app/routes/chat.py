@@ -20,7 +20,7 @@ import structlog
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from ..agent import agent_executor, initial_context
+from ..agent import initial_context, kept_sayisi, select_runner
 from ..config import get_settings
 from ..guards import (
     StreamingOutputGuard,
@@ -147,11 +147,18 @@ async def _akis(req: ChatRequest, t0: float) -> AsyncIterator[dict]:
         # Ilk retrieval KOD tarafinda: agent'in tool'u cagiracagina guvenmiyoruz
         # (bkz. agent.initial_context — uydurma iletisim bilgisi vakasi).
         context = await initial_context(route.kb_query)
-        yield {"tip": "asama", "asama": "bulundu",
-               "adet": sum(k.get("kept", 0) for k in trace)}
+        bulunan = kept_sayisi(trace)
+        yield {"tip": "asama", "asama": "bulundu", "adet": bulunan}
 
         # ADIM 6: Girdi ham mesaj degil router'in cozdugu TAM soru.
-        async for olay in agent_executor(req.lang).astream_events(
+        #
+        # Ilk retrieval sonuc dondurduyse tool'suz zincir: model ikinci kez
+        # arayamaz. Uretimde ikinci aramalarin TAMAMI ya ayni sorgunun ya
+        # parafrazinin tekrariydi ve tur basina 1.5-3.8 saniye harciyordu
+        # (bkz. agent.answer_chain). Bos donduyse agent devreye giriyor; orada
+        # model sorguyu yeniden ifade edip arayabiliyor.
+        yurutucu = select_runner(bulunan, req.lang)
+        async for olay in yurutucu.astream_events(
             {"input": route.resolved_query, "history": history, "context": context},
             version="v2",
         ):

@@ -22,7 +22,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import agent as agent_modulu
-from app.agent import agent_executor, initial_context
+from app.agent import initial_context, select_runner
 from app.router import classify, courtesy_reply, scope_reply
 from eval.judge import degerlendir
 
@@ -71,9 +71,11 @@ async def _cevapla(soru: str) -> tuple[str, list]:
     if route.category != "career":
         return scope_reply(route.category, "tr"), []
     context = await initial_context(route.kb_query)
-    out = await agent_executor("tr").ainvoke(
+    # Yol secimi route ile AYNI fonksiyondan; ayri secseydik eval, kullanicinin
+    # hic gormedigi bir kod yolunu olcerdi.
+    out = await select_runner(len(toplanan), "tr").ainvoke(
         {"input": route.resolved_query, "history": [], "context": context})
-    return out.get("output") or "", toplanan
+    return (out["output"] if isinstance(out, dict) else out.content) or "", toplanan
 
 
 async def _vaka(case: dict, sem: asyncio.Semaphore) -> dict:

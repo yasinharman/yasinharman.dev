@@ -70,7 +70,7 @@ def _degerlendir(expect: str, aradi: bool, reddetti: bool) -> tuple[bool, str]:
 
 async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
     """Uctan uca: /chat route'unun AYNI sirasini izler — nezaket, router, agent."""
-    from app.agent import agent_executor, initial_context
+    from app.agent import initial_context, kept_sayisi, select_runner
     from app.retriever import retrieval_trace
     from app.router import classify, courtesy_reply
 
@@ -99,10 +99,12 @@ async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
         retrieval_trace.set(trace)
         try:
             context = await initial_context(route.kb_query)
-            result = await agent_executor("tr").ainvoke(
+            # Yol secimi route ile AYNI fonksiyondan geliyor.
+            result = await select_runner(kept_sayisi(trace), "tr").ainvoke(
                 {"input": case["question"], "history": _history(case), "context": context}
             )
-            cevap = (result.get("output") or "").lower()
+            metin = result["output"] if isinstance(result, dict) else result.content
+            cevap = (metin or "").lower()
             hata = None
         except Exception as exc:  # noqa: BLE001 — tek vaka tüm eval'i düşürmesin
             cevap, hata = "", f"{type(exc).__name__}: {exc}"
