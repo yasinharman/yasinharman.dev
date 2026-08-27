@@ -51,6 +51,13 @@ export const translations = {
       // Backend hata yolunda aynı cümleyi döndürür; kullanıcı için ikisi de
       // "şu an cevap üretemedik" durumu. Ham hata detayı console'da kalır.
       errorMessage: 'Üzgünüm, şu an cevap üretemiyorum. Lütfen tekrar deneyin.',
+      // Cevabın ilk token'ı 3-7 saniyede geliyor; bu etiketler o boşluğu doldurur.
+      stages: {
+        yonlendiriliyor: 'Soru anlaşılıyor…',
+        araniyor: 'Bilgi tabanında aranıyor…',
+        bulundu: '{n} bölüm bulundu, cevap yazılıyor…',
+        bulunduBos: 'Cevap yazılıyor…',
+      },
     },
 
     experience: {
@@ -107,6 +114,12 @@ export const translations = {
       inputPlaceholder: 'Ask another question...',
       footer: 'Jarvis uses FastAPI + LangChain to synthesise information',
       errorMessage: "Sorry, I can't produce an answer right now. Please try again.",
+      stages: {
+        yonlendiriliyor: 'Understanding the question…',
+        araniyor: 'Searching the knowledge base…',
+        bulundu: 'Found {n} sections, writing the answer…',
+        bulunduBos: 'Writing the answer…',
+      },
     },
 
     experience: {

@@ -25,8 +25,9 @@ def _istek(ip: str = "203.0.113.7") -> Request:
 
 
 class _PatlayanAgent:
-    async def ainvoke(self, _payload):
+    async def astream_events(self, _payload, version=None):
         raise RuntimeError("openai 429")
+        yield  # pragma: no cover — astream_events bir uretici olmali
 
 
 @pytest.fixture

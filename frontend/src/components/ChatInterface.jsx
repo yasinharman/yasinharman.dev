@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { MessageBody, isStructuredAnswer } from './MessageBody';
 
-export function ChatInterface({ messages, isTyping, onSendMessage }) {
+// Asama etiketi. "bulundu" adedi tasiyor; 0 chunk donduyse sayi vermek yerine
+// notr metin gosteriliyor — "0 bolum bulundu" ziyaretciye kotu haber gibi okunur.
+function stageLabel(t, stage) {
+  const s = t.chat.stages;
+  if (stage.asama !== 'bulundu') return s?.[stage.asama];
+  return stage.adet > 0 ? s.bulundu.replace('{n}', stage.adet) : s.bulunduBos;
+}
+
+export function ChatInterface({ messages, isTyping, stage, onSendMessage }) {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef(null);
   const { t } = useLanguage();
@@ -71,10 +79,21 @@ export function ChatInterface({ messages, isTyping, onSendMessage }) {
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start animate-fade-in">
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1.5 items-center h-[52px]">
-                <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
-                <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
-                <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-3 items-center h-[52px]">
+                <div className="flex gap-1.5 items-center">
+                  <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
+                  <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
+                  <div className="w-2 h-2 rounded-full bg-orange-500/70 typing-dot"></div>
+                </div>
+                {/* Nokta animasyonu "bir sey oluyor" der ama NE oldugunu demez.
+                    Kariyer sorusunda ilk token 3-7 saniyede geliyor; o sure boyunca
+                    hangi asamada oldugunu soylemek bekleyisi kisaltmiyor ama
+                    aciklanabilir kiliyor. */}
+                {stage && (
+                  <span className="text-xs text-orange-200/70 tracking-wide">
+                    {stageLabel(t, stage)}
+                  </span>
+                )}
               </div>
             </div>
           )}

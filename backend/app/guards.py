@@ -133,6 +133,58 @@ def output_guard(answer: str, lang: str = "tr") -> tuple[str, str | None]:
     return text, None
 
 
+# Token akisinda output_guard'i sona saklamak ise yaramaz: sizinti daha guard
+# calismadan ekrana yazilmis olur. Cozum bir GECIKME PENCERESI — en uzun leak
+# sinyali kadar metin her zaman elde tutulur ve birikmis metin her token'da
+# taranir, boylece sinyal tamamlandigi anda henuz serbest birakilmamis olur.
+# Sinyalin ilk birkac harfinin cikmis olmasi sizinti degil.
+_TUTMA_PENCERESI = max(len(s) for s in LEAK_SIGNALS)
+
+
+class StreamingOutputGuard:
+    """output_guard'in akis hali. Kullanim:
+
+        g = StreamingOutputGuard(lang)
+        for parca in token_akisi:
+            if metin := g.push(parca): yayinla(metin)
+            if g.reason: break          # sizinti/uzunluk: akisi kes
+        kalan, tam_cevap, reason = g.finish()
+    """
+
+    def __init__(self, lang: str = "tr") -> None:
+        self.lang = lang
+        self.reason: str | None = None
+        self._birikmis = ""
+        self._yayinlanan = 0
+
+    def push(self, parca: str) -> str:
+        if self.reason or not parca:
+            return ""
+        self._birikmis += parca
+        if any(sig in self._birikmis for sig in LEAK_SIGNALS):
+            self.reason = "leak"
+            return ""
+        if len(self._birikmis) > OUTPUT_MAX_LEN:
+            self.reason = "truncated"
+            return ""
+        guvenli = max(len(self._birikmis) - _TUTMA_PENCERESI, 0)
+        cikti = self._birikmis[self._yayinlanan:guvenli]
+        self._yayinlanan = guvenli
+        return cikti
+
+    def finish(self) -> tuple[str, str, str | None]:
+        """(yayinlanacak_kalan, loglanacak_tam_cevap, reason).
+
+        Tam cevap yine output_guard'dan geciyor: akis kontrolu yalnizca sizintiya
+        ve uzunluga bakiyor, bos cevap ve iteration_limit kontrolleri burada."""
+        tam, reason = output_guard(self._birikmis, self.lang)
+        if reason is not None:
+            # Cevap degistirildi; yayinlanmis metin artik gecersiz. Cagiran
+            # "bitti" olayindaki tam cevabi kullanicinin ekranina yazmali.
+            return "", tam, reason
+        return self._birikmis[self._yayinlanan:], tam, None
+
+
 _BLOCKED_USER_MESSAGE = {
     "tr": (
         "Üzgünüm, bu konuda yardımcı olamam. Yasin'in projeleri, deneyimi veya yetenekleri "
