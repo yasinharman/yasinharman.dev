@@ -1,18 +1,31 @@
 # Retrieval eval golden seti.
-# Her soru için: search() sonuçlarında expected_sources'tan biri VEYA
-# expected_substrings'ten biri geçiyorsa hit sayılır.
-# negative: true → beklenti eşik üstü HİÇ sonuç dönmemesi.
+#
+# Beklenti türleri (güçlüden zayıfa):
+#   expected_all        parçaların HEPSİ AYNI chunk'ta → o chunk hayatta kalmalı.
+#   expected_substrings parçalardan BİRİ herhangi bir chunk'ta.
+#   expected_sources    bu dosyalardan HERHANGİ bir chunk döndü mü.
+#   negative: true      eşik üstü hiç sonuç dönmemeli.
+#
+# 2026-08-27 denetimi: 28 pozitif vakanın 12'si "gevşek"ti — dönen sonuçta birden
+# fazla chunk tek başına beklentiyi karşılıyordu, yani doğru chunk elenmiş olsa bile
+# vaka yeşil kalırdı. Bulgu B canlıda tam bu boşluktan geçti. 10'u expected_all'a
+# çevrildi; kalan 2'sinin gevşekliği bilinçli ve yerinde gerekçesi yazılı.
 
 # --- Projeler ---
 - id: proje-liste
+  # Genel bakış chunk'ı olmadan cevap eksik kalır: tek tek proje chunk'ları
+  # dönerse model listeyi kısmi verir. Eskiden 4 chunk'ın her biri tek başına
+  # yetiyordu (expected_sources: projeler.md).
   question: "Yasin'in projelerinden bahseder misin?"
-  expected_sources: [projeler.md]
+  expected_all: ["üç ana proje şunlardır", "Internship Tracker"]
 - id: proje-liste-kisa
   question: "projeler"
-  expected_sources: [projeler.md]
+  expected_all: ["üç ana proje şunlardır", "Internship Tracker"]
 - id: proje-bdf
+  # Eskiden "Projelerin Listesi" chunk'ı da tek başına yetiyordu; oysa soru
+  # projenin kendisini soruyor, tek satırlık liste maddesi cevap değil.
   question: "Business Data Finder projesi nedir?"
-  expected_substrings: ["SerpAPI", "n8n"]
+  expected_all: ["BusinessInfoFinder", "SerpAPI"]
 - id: proje-bdf-teknoloji
   question: "Business Data Finder hangi teknolojilerle geliştirildi?"
   expected_substrings: ["SerpAPI", "Dokploy"]
@@ -32,29 +45,41 @@
 
 # --- Yetenekler ---
 - id: yetenek-diller
+  # En kötü vakaydı: "Python" korpusta her yerde geçtiği için 5 ayrı chunk tek
+  # başına yetiyordu. Soruyu asıl cevaplayan chunk "Programlama Dilleri".
   question: "Yasin hangi programlama dillerini biliyor?"
-  expected_substrings: ["Python", "SQL"]
+  expected_all: ["ana programlama dilidir", "SQL: PostgreSQL"]
 - id: yetenek-teknolojiler
+  # Bulgu B'nin saklandığı vaka: yetenekler.md'nin diğer 4 chunk'ı testi yeşil
+  # tutarken teknoloji listesinin ta kendisi rerank'te eleniyordu.
   question: "Yasin hangi teknolojileri kullanıyor?"
-  expected_sources: [yetenekler.md]
+  expected_all: ["Dokploy ve Coolify", "SQLAlchemy ORM"]
 - id: yetenek-scraping
+  # Uzmanlık chunk'ı "web scraping" ifadesini düz yazıda geçirdiği için tek
+  # başına yetiyordu; hangi araçlarla sorusunu cevaplayan chunk bu değil.
   question: "Yasin web scraping yapabiliyor mu?"
-  expected_sources: [yetenekler.md]
-  expected_substrings: ["Scrapy", "Playwright", "web scraping"]
+  expected_all: ["Scrapy ve Playwright — web scraping"]
 - id: yetenek-docker
+  # BİLEREK GEVŞEK. Soru "tecrübesi var mı" diye soruyor ve cevabı gerçekten üç
+  # yerde: yetenek listesi, proje deployment'ları, iş deneyimi. Tek chunk'a
+  # sabitlemek beklentiyi gerçekten doğru olan cevaplardan dar hale getirirdi.
+  # Teknoloji listesinin kendisini sabitleyen vaka: yetenek-docker-biliyor-mu.
   question: "Yasin'in Docker ve deployment tecrübesi var mı?"
   expected_sources: [yetenekler.md, projeler.md, deneyim.md]
 - id: yetenek-ogrenilen
   question: "Yasin şu anda hangi teknolojileri öğreniyor?"
   expected_substrings: ["Hugging Face", "SEO"]
 - id: yetenek-uzmanlik
+  # "AI" ve "otomasyon" korpusun yarısında geçiyor; 4 chunk tek başına yetiyordu.
   question: "Yasin'in uzmanlık alanı nedir?"
-  expected_substrings: ["AI", "otomasyon"]
+  expected_all: ["temel uzmanlığı", "uçtan uca otomasyon çözümleri"]
 
 # --- Deneyim ---
 - id: deneyim-megagear
+  # "İş Deneyimlerinin Listesi" chunk'ı MegaGear'ı üç satırda özetliyor ve
+  # expected_sources'u tek başına karşılıyordu — "ne yaptı" sorusunun cevabı o değil.
   question: "Yasin MegaGear'da ne yaptı?"
-  expected_sources: [deneyim.md]
+  expected_all: ["Customer/Product Scoring Engine", "172.000 sipariş"]
 - id: deneyim-megagear-detay
   question: "Yasin'in e-ticaret veri altyapısı deneyimi var mı?"
   expected_substrings: ["Etsy", "Shopify"]
@@ -63,10 +88,10 @@
   expected_substrings: ["segment", "Python"]
 - id: deneyim-upwork
   question: "Yasin freelance çalışıyor mu?"
-  expected_substrings: ["Upwork", "Scale AI"]
+  expected_all: ["Outlier platformunda", "pull request"]
 - id: deneyim-scaleai
   question: "Yasin'in LLM eğitimi ile ilgili deneyimi var mı?"
-  expected_substrings: ["Outlier", "Scale AI"]
+  expected_all: ["Scale AI", "pull request"]
 - id: deneyim-topluluk
   # GDG On Campus 20.07.2026'da korpustan çıkarıldı; artık topluluk verisi yok.
   question: "Yasin hangi topluluklarda yer alıyor?"
@@ -92,6 +117,8 @@
   question: "Yasin'in hobileri neler?"
   expected_substrings: ["powerlifting"]
 - id: hakkimda-konum
+  # BİLEREK GEVŞEK. Konum hem "Kimdir" hem "İletişim Bilgileri" chunk'ında var
+  # ve ikisi de soruyu tam cevaplıyor; birini seçmek keyfi olurdu.
   question: "Yasin nerede yaşıyor?"
   expected_substrings: ["İstanbul"]
 

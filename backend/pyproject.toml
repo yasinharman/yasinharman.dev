@@ -63,4 +63,10 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 markers = [
   "integration: gerçek API anahtarları ve canlı Supabase gerektirir",
 ]
+filterwarnings = [
+  # langchain, router'in structured output'unu (Route) serilestirirken her cagride
+  # bunu uretiyor. Zararsiz ama integration ciktisinda 29 kez tekrarlanip gercek
+  # uyarilari gomuyor. eval/run_routing.py ayni filtreyi kendi icinde kuruyor.
+  "ignore:Pydantic serializer warnings:UserWarning",
+]
 asyncio_mode = "auto"
