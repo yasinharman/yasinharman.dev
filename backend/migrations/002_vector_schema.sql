@@ -1,3 +1,4 @@
+-- target: supabase
 -- 002: Vector store şeması — SUPABASE'de çalıştırılır (SQL editörü).
 -- İdempotent: canlı DB'de tablo/index varsa dokunmaz, RPC'yi 4-arg imzayla yeniler.
 -- Canlı durum tespiti: id bigint, embedding vector(1536) (bkz. 000_live_snapshot.txt)

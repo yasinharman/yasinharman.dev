@@ -49,8 +49,8 @@ async def test_agent_patlayinca_kullanici_nazik_metin_alir(patlayan_agent, monke
     kayitlar = []
 
     async def sahte_log_error(session_id, user_message, exc, latency_ms,
-                              retrieval=None, route=None):
-        kayitlar.append((session_id, user_message, type(exc).__name__, retrieval))
+                              retrieval=None, route=None, timings=None):
+        kayitlar.append((session_id, user_message, type(exc).__name__, retrieval, timings))
 
     monkeypatch.setattr("app.routes.chat.log_error", sahte_log_error)
 
@@ -58,7 +58,11 @@ async def test_agent_patlayinca_kullanici_nazik_metin_alir(patlayan_agent, monke
 
     assert resp.response == error_user_message("tr")
     assert resp.blocked is False, "hata bir guard bloğu değil, blocked işaretlenmemeli"
-    assert kayitlar == [("s-hata", "Yasin kaç yaşında?", "RuntimeError", None)]
+    (oturum, mesaj, hata, retrieval, timings), = kayitlar
+    assert (oturum, mesaj, hata, retrieval) == ("s-hata", "Yasin kaç yaşında?", "RuntimeError", None)
+    # Hata satirina da sure dokumu yazilir: yavaslik yuzunden mi patliyor sorusunu
+    # ancak boyle cevaplayabiliriz.
+    assert {"toplam_ms", "router_ms", "retrieval_ms", "llm_ms"} <= timings.keys()
 
 
 async def test_ingilizce_hata_metni_ingilizce_doner(patlayan_agent, monkeypatch):
@@ -126,27 +130,19 @@ async def test_error_satiri_yazilir(sahte_db):
     assert "retrieval" in sql, "patlamadan önce getirilen chunk'lar da yazılmalı"
 
 
-async def test_004_uygulanmadiysa_satir_kaybolmaz(sahte_db):
-    """CHECK kısıtı 'error'ü reddediyorsa satır blocked olarak yazılır, atılmaz."""
-    conn = sahte_db(reddet=asyncpg.exceptions.CheckViolationError)
+async def test_sema_eksikse_istek_yine_de_patlamaz(sahte_db):
+    """Burada eskiden kademeli bir gerileme merdiveni vardı: kolon yoksa kolonsuz
+    yaz, CHECK reddederse status'ü düşür. `app/migrate.py` şemayı startup'ta
+    güncellediği için o durumlar artık oluşamıyor ve merdiven kaldırıldı.
+
+    Kalan sözleşme daha basit ve tek başına doğru olan: INSERT ne sebeple olursa
+    olsun başarısızsa istek YİNE DE tamamlanır. Kullanıcının cevabı, log'un
+    yazılabilmesine bağlı değil."""
+    conn = sahte_db(reddet=asyncpg.exceptions.UndefinedColumnError)
     await logging_db.log_error("s1", "soru", TimeoutError("cohere"), 90)
 
-    assert len(conn.cagrilar) == 2, "reddedilen INSERT'ten sonra yeniden denenmedi"
-    _, args = conn.cagrilar[-1]
-    assert args[1] == "blocked"
-    assert args[2] == "error:TimeoutError: cohere", "sebep reason'da korunmalı"
-
-
-async def test_003_uygulanmadiysa_retrieval_kolonsuz_yazilir(sahte_db):
-    """Kademeli gerileme: tam INSERT (retrieval+route) → retrieval'lı → düz.
-    Migration'lar elle uygulandığı ve push otomatik deploy tetiklediği için kod,
-    her iki migration'ından da önce canlıda olabilir."""
-    conn = sahte_db(reddet=asyncpg.exceptions.UndefinedColumnError)
-    await logging_db.log_allowed("s1", "soru", "cevap", 50, retrieval=[{"q": "x"}])
-
-    assert len(conn.cagrilar) == 3, "iki kademeli gerileme çalışmadı"
-    assert "retrieval" not in conn.cagrilar[-1][0]
-    assert "route" not in conn.cagrilar[-1][0]
+    assert len(conn.cagrilar) == 1, "tek INSERT denenmeli, yeniden deneme yok"
+    assert "timings" in conn.cagrilar[0][0], "timings kolonu INSERT'te olmalı"
 
 
 async def test_log_yazamamak_istegi_patlatmaz(monkeypatch):

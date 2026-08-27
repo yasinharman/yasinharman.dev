@@ -69,7 +69,7 @@ def test_trace_esigi_ve_bos_sonucu_kaydeder():
     try:
         reranked = _docs(0.09, 0.07)
         kept, cutoff = _apply_cutoff(reranked, get_settings())
-        _record_trace("hobiler", reranked, kept, cutoff)
+        _record_trace("hobiler", reranked, kept, cutoff, 42)
     finally:
         retrieval_trace.set(None)
 
@@ -78,3 +78,4 @@ def test_trace_esigi_ve_bos_sonucu_kaydeder():
     assert kayit["cutoff"] == get_settings().RERANK_SCORE_THRESHOLD
     assert kayit["kept"] == 0
     assert len(kayit["results"]) == 2, "elenenler de ize düşmeli, debug için"
+    assert kayit["duration_ms"] == 42, "arama süresi çağrı başına kaydedilmeli"
