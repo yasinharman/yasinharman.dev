@@ -109,26 +109,22 @@ OUTPUT_MAX_LEN = 3000
 # (bkz. notes/yapilacaklar.md FAZ 3.4).
 _AGENT_STOPPED_PREFIX = "Agent stopped due to"
 
-# Geriye donuk uyumluluk: dil parametresi verilmeyen cagrilar Turkce alir.
-OUTPUT_LEAK_REPLACEMENT = _OUTPUT_LEAK_REPLACEMENT["tr"]
-OUTPUT_EMPTY_REPLACEMENT = _OUTPUT_EMPTY_REPLACEMENT["tr"]
-
 
 def output_guard(answer: str, lang: str = "tr") -> tuple[str, str | None]:
     """Return (sanitized_text, reason_if_modified)."""
     text = answer or ""
 
     if text.strip().startswith(_AGENT_STOPPED_PREFIX):
-        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT), "iteration_limit"
+        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, _OUTPUT_EMPTY_REPLACEMENT["tr"]), "iteration_limit"
 
     if any(s in text for s in LEAK_SIGNALS):
-        return _OUTPUT_LEAK_REPLACEMENT.get(lang, OUTPUT_LEAK_REPLACEMENT), "leak"
+        return _OUTPUT_LEAK_REPLACEMENT.get(lang, _OUTPUT_LEAK_REPLACEMENT["tr"]), "leak"
 
     if len(text) > OUTPUT_MAX_LEN:
         return text[:OUTPUT_MAX_LEN] + "...", "truncated"
 
     if not text.strip():
-        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT), "empty"
+        return _OUTPUT_EMPTY_REPLACEMENT.get(lang, _OUTPUT_EMPTY_REPLACEMENT["tr"]), "empty"
 
     return text, None
 
@@ -196,11 +192,9 @@ _BLOCKED_USER_MESSAGE = {
     ),
 }
 
-BLOCKED_USER_MESSAGE = _BLOCKED_USER_MESSAGE["tr"]
-
 
 def blocked_user_message(lang: str = "tr") -> str:
-    return _BLOCKED_USER_MESSAGE.get(lang, BLOCKED_USER_MESSAGE)
+    return _BLOCKED_USER_MESSAGE.get(lang, _BLOCKED_USER_MESSAGE["tr"])
 
 
 def error_user_message(lang: str = "tr") -> str:
@@ -209,4 +203,4 @@ def error_user_message(lang: str = "tr") -> str:
     Bilerek output_guard'ın "boş cevap" metniyle aynı: kullanıcı açısından ikisi de
     "şu an cevap üretemedik" durumu, ayırt etmesi gereken bir fark yok.
     """
-    return _OUTPUT_EMPTY_REPLACEMENT.get(lang, OUTPUT_EMPTY_REPLACEMENT)
+    return _OUTPUT_EMPTY_REPLACEMENT.get(lang, _OUTPUT_EMPTY_REPLACEMENT["tr"])
