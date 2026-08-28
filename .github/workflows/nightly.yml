@@ -94,3 +94,17 @@ jobs:
       # rate limit kovasi yanlis anahtara baglanir. Sessiz bozulma; her gece bakilir.
       - name: Cloudflare araliklari guncel mi
         run: ./scripts/cloudflare-ip-kontrol.sh
+
+  # Secret gerektirmiyor: canli uctan okuyor. Store ile kodun embedding modeli
+  # ayrisirsa ya da korpus bosalirsa sabaha kirmizi gorelim — bu ariza sinifi
+  # sessiz calisiyor, cevaplar makul gorunmeye devam ediyor.
+  canli-readyz:
+    runs-on: ubuntu-latest
+    steps:
+      - name: /readyz ok mu
+        run: |
+          govde=$(curl -fsS --max-time 20 https://api.yasinharman.dev/readyz) || {
+            echo "::error::/readyz cevap vermedi"; exit 1; }
+          echo "$govde"
+          durum=$(echo "$govde" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+          [ "$durum" = "ok" ] || { echo "::error::/readyz status=$durum"; exit 1; }

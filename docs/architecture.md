@@ -120,6 +120,22 @@ kosabilsin diye boyle. `scripts/dev.sh` yine de uvicorn'u `backend/` icinden
 baslatir (`migrations/`, `data/` goreli yollari). Bu uc dosya birbirine bagli: `config.py`, `scripts/dev.sh`
 ve `backend/Dockerfile` (`WORKDIR /app` + `COPY app|migrations|data`).
 
+## Saglik uclari
+
+| uc | ne soyler | kim kullanir |
+|---|---|---|
+| `/healthz` | surec ayakta | Docker HEALTHCHECK, Coolify |
+| `/readyz` | Supabase + DB gercekten calisiyor mu, store hangi modelle yazildi, kod hangisini kullaniyor, prompt surumu | deploy sonrasi teshis, nightly |
+
+`/readyz` bilerek HEALTHCHECK'e baglanmadi: Supabase'in gecici bir kesintisi
+konteyneri yeniden baslatirdi, yani kismi ariza tam arizaya buyurdu.
+
+En degerli kontrolu **embed_model uyusmazligi**: chunk'lar hangi modelle
+yazildiysa metadata'da duruyor (`app/ingest.py::sync_source`), `/readyz` bunu
+`OPENAI_EMBED_MODEL` ile karsilastiriyor. Uyusmazlik sessiz calisir — 18
+chunk'in 12'si zaten rerank'e gittigi icin cevaplar makul gorunmeye devam eder,
+yalnizca vektor siralamasi coper (2026-08-27: recall@1 %78.6 -> %14.3).
+
 ## Origin erisimi (Cloudflare)
 
 ```
