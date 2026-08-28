@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "yasinharman.dev — Calisma Zamani Mimarisi",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "sohbet-yolu",
+        "label": "Sohbet yolu",
+        "focus": [
+          "ziyaretci",
+          "cloudflare",
+          "api",
+          "hat",
+          "retriever"
+        ],
+        "note": "Ziyaretcinin sorusunun kenardan cevaba kadar izledigi ana yol."
+      },
+      {
+        "id": "veri-katmani",
+        "label": "Iki ayri veritabani",
+        "focus": [
+          "api",
+          "chatdb",
+          "ingest",
+          "vector"
+        ],
+        "note": "Oturum hafizasi/loglar ile bilgi tabani farkli sistemlerde durur."
+      },
+      {
+        "id": "dis-servisler",
+        "label": "Dis servisler",
+        "focus": [
+          "hat",
+          "retriever",
+          "openai",
+          "cohere",
+          "vector"
+        ],
+        "note": "Ucret ureten ve gecikmeyi belirleyen ucuncu taraf cagrilari."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 5,
+    "cellW": 150,
+    "cellH": 68,
+    "gapX": 80,
+    "gapY": 100
+  },
+  "components": [
+    {
+      "id": "ziyaretci",
+      "type": "external",
+      "label": "Ziyaretci",
+      "sublabel": "Tarayici - SSE",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "cloudflare",
+      "type": "cloud",
+      "label": "Cloudflare",
+      "sublabel": "WAF - edge",
+      "row": 1,
+      "col": 1
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "React SPA",
+      "sublabel": "yasinharman.dev",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": "kapi",
+      "type": "security",
+      "label": "Rate limit + Guard",
+      "sublabel": "20/dk - 100/gun",
+      "row": 0,
+      "col": 2
+    },
+    {
+      "id": "hat",
+      "type": "backend",
+      "label": "Router + Agent",
+      "sublabel": "LangChain - gpt-4o-mini",
+      "row": 0,
+      "col": 3
+    },
+    {
+      "id": "openai",
+      "type": "external",
+      "label": "OpenAI",
+      "sublabel": "chat - embedding",
+      "row": 0,
+      "col": 4
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI",
+      "sublabel": "api.yasinharman.dev",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": "retriever",
+      "type": "backend",
+      "label": "Retriever",
+      "sublabel": "k=12 - esik 0.40",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": "cohere",
+      "type": "external",
+      "label": "Cohere",
+      "sublabel": "rerank",
+      "row": 1,
+      "col": 4
+    },
+    {
+      "id": "chatdb",
+      "type": "database",
+      "label": "Chat DB",
+      "sublabel": "oturum + loglar",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": "ingest",
+      "type": "backend",
+      "label": "Ingest",
+      "sublabel": "data/*.md - manuel",
+      "row": 2,
+      "col": 3
+    },
+    {
+      "id": "vector",
+      "type": "database",
+      "label": "Supabase Vector",
+      "sublabel": "documents (1536)",
+      "row": 2,
+      "col": 4
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Coolify - api.yasinharman.dev (tek uvicorn sureci)",
+      "wraps": [
+        "kapi",
+        "hat",
+        "api",
+        "retriever"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ziyaret",
+      "from": "ziyaretci",
+      "to": "cloudflare",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "statik",
+      "from": "cloudflare",
+      "to": "spa",
+      "label": "statik SPA",
+      "labelDy": 24
+    },
+    {
+      "id": "sohbet",
+      "from": "cloudflare",
+      "to": "api",
+      "label": "POST /chat/stream",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kapilar",
+      "from": "api",
+      "to": "kapi",
+      "label": "her istek",
+      "variant": "security"
+    },
+    {
+      "id": "yonlendir",
+      "from": "kapi",
+      "to": "hat",
+      "label": "izin verilen istek"
+    },
+    {
+      "id": "llm",
+      "from": "hat",
+      "to": "openai",
+      "label": "LLM"
+    },
+    {
+      "id": "arama",
+      "from": "hat",
+      "to": "retriever",
+      "label": "portfolio_kb",
+      "labelDy": 24
+    },
+    {
+      "id": "rerank",
+      "from": "retriever",
+      "to": "cohere",
+      "label": "rerank"
+    },
+    {
+      "id": "vektor",
+      "from": "retriever",
+      "to": "vector",
+      "label": "match_documents RPC",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "hafiza",
+      "from": "api",
+      "to": "chatdb",
+      "label": "asyncpg - MODE=prod",
+      "labelDy": 44
+    },
+    {
+      "id": "admin",
+      "from": "api",
+      "to": "ingest",
+      "label": "/admin/ingest-path",
+      "variant": "dashed"
+    },
+    {
+      "id": "upsert",
+      "from": "ingest",
+      "to": "vector",
+      "label": "delete-by-source + insert",
+      "variant": "dashed",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kenar",
+      "items": [
+        "Origin 80/443 yalnizca Cloudflare araliklarina acik (DOCKER-USER zinciri)",
+        "Rate limit anahtari CF-Connecting-IP; XFF'in son elemani CF araliginda degilse header yok sayilir"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sohbet hatti",
+      "items": [
+        "Guard'lar deterministik: uzunluk, injection kalibi, sizinti sinyali - LLM degil",
+        "Router career disini isaretlerse ne retrieval ne ana LLM cagrilir",
+        "Ilk retrieval kodda garanti; tool cagrisi modelin insafina birakilmaz"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Veri",
+      "items": [
+        "Iki ayri sistem: Supabase vector store ile Coolify Postgres karistirilmaz",
+        "MODE=local tek satir yazmaz; MODE=prod'da DATABASE_URL eksikse startup coker",
+        "Migration'lar servis vermeden once startup'ta kosar (main.py lifespan)"
+      ]
+    }
+  ]
+}

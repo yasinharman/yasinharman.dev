@@ -6,6 +6,26 @@ Yasin Harman'ın kişisel portfolyo sitesinin **AI destekli** bir landing page �
 
 Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RAG servisini HTTP üzerinden birbirine bağlar. Sistemin genel resmi için [`docs/architecture.md`](docs/architecture.md).
 
+## Mimari
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/mimari-dark.png">
+    <img alt="yasinharman.dev calisma zamani mimarisi: Ziyaretci, Cloudflare, React SPA, FastAPI, guard katmani, router+agent, retriever, OpenAI, Cohere, Supabase vector store ve chat veritabani" src="docs/assets/mimari-light.png" width="900">
+  </picture>
+</p>
+
+Ziyaretçinin sorusu Cloudflare'dan geçip tek bir uvicorn sürecine giriyor; orada
+rate limit ve guard'lardan sonra router kapsam kararını veriyor, `career` dışı
+sorular retrieval'a ve ana LLM'e hiç ulaşmıyor. Bilgi tabanı Supabase vector
+store'da, oturum hafızası ve loglar ayrı bir Postgres'te duruyor.
+
+**[Etkileşimli sürüm: `docs/mimari.html`](docs/mimari.html)** — düğüm arama (`/`),
+rota izleme (`R`), rehberli anlatım (`P`), koyu/açık tema. Tek dosya, bağımlılıksız;
+tarayıcıda açmak yeterli. Kaynağı [`docs/mimari.architecture.json`](docs/mimari.architecture.json)
+([Archify](https://github.com/tt-a1i/archify) ile derlenir). Anlatımın tamamı için
+[`docs/architecture.md`](docs/architecture.md).
+
 ## Öne Çıkan Özellikler
 
 - **Konuşmaya dayalı hero section** — Kullanıcı, arama çubuğuna "Yasin hangi teknolojileri kullanıyor?" gibi sorular yazar; daktilo efektiyle değişen placeholder'lar ilham verir.
@@ -31,7 +51,10 @@ Proje; React + Vite tabanlı bir arayüz ile FastAPI + LangChain tabanlı bir RA
 ├── LICENSE
 ├── package.json                 # kök orkestrasyon: iki servisi tek komutla çalıştırır
 ├── docs/
-│   └── architecture.md          # sistem mimarisi, iki DB ayrımı, ingest akışı
+│   ├── architecture.md          # sistem mimarisi, iki DB ayrımı, ingest akışı
+│   ├── mimari.html              # etkileşimli mimari diyagramı (tek dosya)
+│   ├── mimari.architecture.json # diyagramın kaynağı (Archify JSON IR)
+│   └── assets/                  # README'deki mimari görselleri
 ├── scripts/
 │   └── dev.sh                   # frontend + backend'i birlikte başlatır
 ├── frontend/                    # React + Vite uygulaması
