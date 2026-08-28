@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import re
 import warnings
 from collections import Counter
 from pathlib import Path
@@ -68,6 +69,27 @@ def _degerlendir(expect: str, aradi: bool, reddetti: bool) -> tuple[bool, str]:
     raise ValueError(f"bilinmeyen kategori: {expect}")
 
 
+def _cozumleme_kontrolu(case: dict, route) -> str | None:
+    """resolved_query gercekten kendi basina anlasilir mi? Hata varsa sebebi doner.
+
+    Neden ayri bir kontrol: takip vakalari yalnizca KATEGORIYI assert ediyordu ve
+    canli olayin sebebi kategori DEGILDI. "how do I reach him?" career olarak
+    dogru siniflandirilip resolved_query'de "him" birakildiginda cevaplayici
+    soruyu eksik aliyor ve tool'u hic cagirmadan uyduruyordu (sahte e-posta,
+    yanlis LinkedIn). Yani vaka, yazilma sebebi olan bug'i yakalayamiyordu.
+
+    Iki alan da istege bagli; verilmeyen vaka eskisi gibi calisir.
+    """
+    metin = f"{route.resolved_query} {route.kb_query}".lower()
+    for parca in case.get("resolved_contains") or []:
+        if parca.lower() not in metin:
+            return f"BAGLAM KAYBI: {parca!r} gecmiyor → {route.resolved_query!r}"
+    for parca in case.get("resolved_forbids") or []:
+        if re.search(rf"\b{re.escape(parca.lower())}\b", route.resolved_query.lower()):
+            return f"ZAMIR KALDI: {parca!r} → {route.resolved_query!r}"
+    return None
+
+
 async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
     """Uctan uca: /chat route'unun AYNI sirasini izler — nezaket, router, agent."""
     from app.agent import initial_context, kept_sayisi, select_runner
@@ -92,6 +114,10 @@ async def _calistir(case: dict, sem: asyncio.Semaphore) -> dict:
         gecti, gozlem = _degerlendir(case["expect"], aradi=False, reddetti=True)
         return {**case, "gecti": gecti, "gozlem": f"{gozlem} → {route.category}",
                 "aradi": False, "cevap": "", "sorgular": []}
+
+    if (kusur := _cozumleme_kontrolu(case, route)) is not None:
+        return {**case, "gecti": False, "gozlem": kusur, "aradi": False,
+                "cevap": route.resolved_query[:150], "sorgular": []}
 
     case = {**case, "question": route.resolved_query}
     async with sem:
@@ -137,8 +163,9 @@ async def _router_calistir(case: dict, sem: asyncio.Semaphore) -> dict:
                     "aradi": False, "cevap": "", "sorgular": []}
 
     gecti = route.category == case["expect"]
-    return {**case, "gecti": gecti,
-            "gozlem": f"{route.category}  (beklenen {case['expect']})",
+    kusur = _cozumleme_kontrolu(case, route) if gecti else None
+    return {**case, "gecti": gecti and kusur is None,
+            "gozlem": kusur or f"{route.category}  (beklenen {case['expect']})",
             "aradi": route.category == "career", "cevap": route.resolved_query[:150],
             "sorgular": [route.kb_query] if route.kb_query else []}
 
