@@ -3,12 +3,13 @@ import warnings
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .db import close_pool, init_pool, persistence_enabled
 from .migrate import run_migrations
+from .readyz import readiness
 from .routes.admin import router as admin_router
 from .routes.chat import router as chat_router
 
@@ -73,9 +74,20 @@ def create_app() -> FastAPI:
     app.include_router(chat_router)
     app.include_router(admin_router)
 
+    # /healthz: surec ayakta mi. Docker HEALTHCHECK bunu kullaniyor, bilerek
+    # hicbir dis bagimliliga dokunmuyor — bkz. app/readyz.py docstring'i.
     @app.get("/healthz")
     async def healthz() -> dict:
         return {"status": "ok"}
+
+    # /readyz: bagimliliklar gercekten calisiyor mu. Deploy sonrasi "indi mi,
+    # dogru korpusa mi bakiyor" sorusunu /chat'e istek atmadan cevapliyor.
+    @app.get("/readyz")
+    async def readyz(response: Response) -> dict:
+        govde, hazir = await readiness()
+        if not hazir:
+            response.status_code = 503
+        return govde
 
     return app
 

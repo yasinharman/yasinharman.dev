@@ -167,8 +167,18 @@ async def sync_source(source: str, docs: list[Document]) -> int:
     vectors = await asyncio.to_thread(_embed_texts, [d.page_content for d in docs])
     # strict=True: embedding sayisi chunk sayisiyla uyusmazsa sessizce kirpmak yerine
     # patlasin — kisa donen bir embedding cevabi korpusun kuyrugunu yazmadan gecerdi.
+    #
+    # embed_model/embed_dim metadata'ya YAZILIYOR cunku vektorden geri okunamiyor.
+    # 2026-08-27'de kod 3-large'a gecti ama store 3-small'da kaldi ve fark ancak
+    # eval kosarak goruldu; canli cevaplar dogru gorunuyordu (18 chunk'in 12'si
+    # zaten rerank'e gidiyor, yani vektor siralamasi bozuksa bile cevap makul
+    # cikiyor). Bu alan sayesinde /readyz uyusmazligi tek istekte soyleyebiliyor.
+    ayar = get_settings()
     rows = [
-        {"content": d.page_content, "metadata": d.metadata, "embedding": v}
+        {"content": d.page_content,
+         "metadata": {**d.metadata, "embed_model": ayar.OPENAI_EMBED_MODEL,
+                      "embed_dim": ayar.OPENAI_EMBED_DIM},
+         "embedding": v}
         for d, v in zip(docs, vectors, strict=True)
     ]
     await asyncio.to_thread(_delete_source, source)
