@@ -114,10 +114,33 @@ Proxy sayesinde `VITE_API_URL=/api/chat` gibi goreli bir adres kullanilabilir;
 boylece telefondan veya tek bir Cloudflare tunnel'i uzerinden test ederken
 ikinci bir tunnel gerekmez (`frontend/vite.config.js`).
 
-Backend `.env` dosyasini calisma dizinine gore okudugu icin
-(`app/config.py`: `env_file=".env"`) `scripts/dev.sh` uvicorn'u `backend/`
-icinden baslatir. Bu uc dosya birbirine bagli: `config.py`, `scripts/dev.sh`
+`app/config.py` `.env`'i modulun yanindan MUTLAK yolla okur (`ENV_FILE`), yani
+calisma dizini ne olursa olsun ayni dosya bulunur — testler repo kokunden de
+kosabilsin diye boyle. `scripts/dev.sh` yine de uvicorn'u `backend/` icinden
+baslatir (`migrations/`, `data/` goreli yollari). Bu uc dosya birbirine bagli: `config.py`, `scripts/dev.sh`
 ve `backend/Dockerfile` (`WORKDIR /app` + `COPY app|migrations|data`).
+
+## Origin erisimi (Cloudflare)
+
+```
+Ziyaretci ──▶ Cloudflare edge ──▶ Traefik ──▶ uvicorn
+                    │                └─ XFF'e gordugu peer'i EKLER
+                    └─ CF-Connecting-IP'yi kendisi yazar
+```
+
+Rate limit'in anahtari `CF-Connecting-IP`. O header'a ancak istek gercekten
+Cloudflare'dan geldiyse guvenilebilir — `app/cloudflare.py` XFF'in son elemani
+(Traefik'in gordugu, istemcinin uyduramadigi adres) yayinlanmis edge
+araliklarinda mi diye bakar. Degilse header yok sayilir ve kova o adrese baglanir
+(`app/ratelimit.py::identify_client`), ayrica `dogrudan_origin` uyarisi loglanir.
+
+Uygulama katmani tek basina yetmez: Cloudflare atlandiginda WAF ve DDoS korumasi
+da devre disi kalir. Agdaki kural `scripts/origin-firewall.sh` ile sunucuya
+yaziliyor — 80/443 yalnizca Cloudflare araliklarina acik, DOCKER-USER zincirinde
+(Docker ufw'yi atlar, `ufw deny 443` sessizce etkisizdir).
+
+Aralik listesi `backend/app/cloudflare.py` icinde sabit; nightly is akisindaki
+`cloudflare-ip-listesi` isi her gece upstream ile karsilastirir.
 
 ## Kalite kapisi
 

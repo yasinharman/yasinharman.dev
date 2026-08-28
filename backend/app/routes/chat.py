@@ -30,7 +30,7 @@ from ..guards import (
 )
 from ..logging_db import log_allowed, log_blocked, log_error
 from ..memory import append_message, get_history
-from ..ratelimit import client_ip, get_limiter
+from ..ratelimit import get_limiter, identify_client
 from ..retriever import retrieval_trace
 from ..router import classify, courtesy_reply, scope_reply
 from ..schemas import ChatRequest, ChatResponse
@@ -68,7 +68,13 @@ def _rate_limit(req: ChatRequest, request: Request, t0: float):
     """Rate limit — en ucuz kontrol, en basta; bir flood input_guard'i bile
     mesgul etmeden geri cevrilsin. Akista da BURADA, stream baslamadan once
     calisiyor: govde akmaya basladiktan sonra 429 donulemez."""
-    rate = get_limiter().check(client_ip(request), req.session_id)
+    istemci = identify_client(request)
+    if istemci.direct_origin:
+        # Cloudflare atlanip origin'e dogrudan baglanilmis. Adresi disaridan
+        # bilmek gerekiyor; yani bu satir ya bir port tarayicisinin ya da
+        # kuralin dustugunun isareti. Firewall'dan sonra hic gorunmemeli.
+        log.warning("dogrudan_origin", peer=istemci.peer, session_id=req.session_id)
+    rate = get_limiter().check(istemci.ip, req.session_id)
     if rate.allowed:
         return None
     log.warning("rate_limited", session_id=req.session_id, reason=rate.reason,

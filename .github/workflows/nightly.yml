@@ -81,3 +81,16 @@ jobs:
         if: always() && steps.kontrol.outputs.hazir == 'true'
         working-directory: backend
         run: python -m eval.run_groundedness
+
+  # Secret gerektirmiyor, para harcamiyor — ayri is olmasinin sebebi bu: yukaridaki
+  # is secret'lar tanimli degilken atlaniyor, bu kontrolun ise her gece kosmasi lazim.
+  cloudflare-ip-listesi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # backend/app/cloudflare.py'deki araliklar CF-Connecting-IP'ye guvenip
+      # guvenmeyecegimize karar veriyor. Liste eskirse yeni bir Cloudflare
+      # araligindan gelen mesru ziyaretci "dogrudan baglanti" sayilir ve
+      # rate limit kovasi yanlis anahtara baglanir. Sessiz bozulma; her gece bakilir.
+      - name: Cloudflare araliklari guncel mi
+        run: ./scripts/cloudflare-ip-kontrol.sh
