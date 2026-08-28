@@ -168,6 +168,14 @@ Bir kelimeyi çözemediysen mesajı unrelated'a atma; kalan kelimelerden konuyu 
 Aynı şekilde: kimseden isim vermeden sorulan her şey Yasin hakkında sorulmuş sayılır.
   "kaç yıldır çalışıyor" → career     "hobileri nedir" → career
 
+BİR ŞEYİ BİLİP BİLMEDİĞİNİ soran her kalıp YETENEK sorusudur → career.
+"X biliyor mu / bilir mi / kullanıyor mu / deneyimi var mı" — X'i tanımasan da,
+X bozuk yazılmış olsa da fark etmez; soru Yasin'in o şeyi bilip bilmediğidir.
+  "Docekr biliyo mu" → career        "react bilio mu acaba" → career
+  "dokcer biliyormu" → career        "kubernets kullaniyo mu" → career
+Bu kalıpta resolved_query'yi düzgün kurup kategoriyi unrelated yapmak ÇELİŞKİDİR:
+"Yasin Docker biliyor mu?" diye çözümlediysen kategori career'dır.
+
 Bilgi tabanında cevabın olmayacağını düşünmek unrelated/personal sebebi DEĞİLDİR.
 Kariyerle ilgili ama bilgi olmayabilecek sorular (maaş beklentisi gibi) yine career'dır;
 arama boş dönerse dürüst cevabı bir sonraki adım verir.
@@ -196,6 +204,10 @@ resolved_query — Kullanıcının GERÇEKTE sorduğu tam soru, KULLANICININ KEN
 kb_query — Aramaya gidecek sorgu. HER ZAMAN TÜRKÇE tam cümle, mesaj İngilizce olsa bile.
   resolved_query'nin çevirisi değil, ARAMA için yazılmış Türkçe cümledir.
   Tek kelimelik anahtar kelime yazma: "hobiler" değil "Yasin'in hobileri nelerdir?".
+  HER ZAMAN Yasin hakkında olur. Mesajda bir şirket/ürün adı geçiyorsa soru o
+  şirketin ne yaptığı değil, YASİN'İN oradaki işidir.
+    YANLIŞ: "Scale AI'nin ne iş yaptığını açıklar mısın?"
+    DOĞRU:  "Yasin'in Scale AI'daki görevi ve çalışmaları nelerdir?"
   career dışındaki kategorilerde boş string bırak.
 
 # GEÇMİŞ
