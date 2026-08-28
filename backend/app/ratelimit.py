@@ -16,6 +16,7 @@ from time import monotonic
 
 from fastapi import Request
 
+from .cloudflare import is_cloudflare, is_private
 from .config import get_settings
 
 _MINUTE = 60.0
@@ -107,30 +108,65 @@ def get_limiter() -> RateLimiter:
     return RateLimiter(s.RATE_LIMIT_PER_MIN, s.RATE_LIMIT_PER_DAY)
 
 
-def client_ip(request: Request) -> str:
-    """Gerçek istemci adresi. Zincir: istemci → Cloudflare → Traefik → uvicorn.
+@dataclass(frozen=True)
+class Client:
+    ip: str
+    # Bize baglanan adres — Cloudflare edge'i, Docker koprusu ya da (Cloudflare
+    # atlanmissa) saldirganin kendisi.
+    peer: str
+    via_cloudflare: bool
 
-    `CF-Connecting-IP` kullanılır: Cloudflare bu header'ı KENDİSİ yazar ve istemcinin
-    gönderdiğini ezer, yani origin'e yalnızca Cloudflare üzerinden gelinebildiği sürece
-    spoof edilemez.
+    @property
+    def direct_origin(self) -> bool:
+        """Public bir adres origin'e DOGRUDAN baglanmis: Cloudflare atlanmis.
 
-    X-Forwarded-For bu topolojide KULLANILAMAZ — ilk sürüm onu kullanıyordu ve canlıda
-    limit hiç tetiklenmedi (22 ardışık istek, sıfır 429). Sebebi: Cloudflare gerçek
-    istemciyi XFF'e ekliyor, Traefik de gördüğü peer'i (Cloudflare EDGE adresi) sona
-    ekliyor. Son eleman her istekte değişen bir edge IP'si oluyor, dolayısıyla her istek
-    kendi kovasına düşüyordu. İlk elemanı almak da çözüm değil: onu istemci uydurabilir.
+        Ozel adresler (lokal gelistirme, Docker ici) haric tutuluyor; yoksa
+        `MODE=local` calisirken her istek uyari uretirdi. Firewall uygulandiktan
+        sonra bu bayragin canlida bir daha hic dogru olmamasi gerekiyor —
+        gorunurse ya kural dusmus ya da yeni bir yol acilmistir.
+        """
+        return (not self.via_cloudflare
+                and self.peer != "unknown"
+                and not is_private(self.peer))
 
-    Cloudflare devre dışı kalırsa (doğrudan Traefik) XFF'in son elemanına düşülür; o
-    topolojide son eleman gerçekten Traefik'in gördüğü peer'dır.
 
-    NOT: Origin IP'si bilinip Cloudflare atlanabilirse sahte bir CF-Connecting-IP ile
-    limit aşılabilir. Kalıcı çözüm origin'e yalnızca Cloudflare IP aralıklarından
-    erişime izin vermek; ikinci bir katman olarak Cloudflare'ın kendi rate limit kuralı.
+def identify_client(request: Request) -> Client:
+    """Gercek istemci adresi. Zincir: istemci -> Cloudflare -> Traefik -> uvicorn.
+
+    Iki adres var ve ikisi de gerekli:
+
+    * `peer` — Traefik'in KENDI gordugu baglanti adresi, XFF'in son elemani.
+      Traefik gordugu peer'i listenin sonuna EKLER, bu yuzden istemci ne
+      gonderirse gondersin son eleman uydurulamaz. Cloudflare uzerinden gelen
+      trafikte bu her istekte degisen bir edge adresidir (canli olcum, 2026-08-26).
+    * `CF-Connecting-IP` — asil ziyaretci. Cloudflare bu header'i kendisi yazip
+      istemciden geleni ezer, ama YALNIZCA istek ondan geciyorsa.
+
+    Kural: header'a ancak peer bir Cloudflare adresiyse guvenilir. 2026-08-28'de
+    origin'in Cloudflare atlanarak dogrudan cevap verdigi olculdu;
+    o yoldan gelen biri CF-Connecting-IP'yi her istekte degistirip limiti
+    tamamen atlatabiliyordu. Peer Cloudflare degilse header yok sayilir ve
+    kova peer'in kendisine baglanir — yani dogrudan baglanan da sinirli kalir.
+
+    Peer ozel bir adresse (Docker koprusu, ikinci bir dahili proxy) topolojiyi
+    bilmiyoruz: header'a guvenmeye devam edilir. Aksi halde onumuze bir ic proxy
+    girdigi gun butun ziyaretciler tek kovaya duser ve limit herkesi keserdi.
+    Guvenlik acisindan kayip yok: peer'i ozel gostermek istemcinin elinde degil.
     """
-    cf = request.headers.get("cf-connecting-ip")
-    if cf and cf.strip():
-        return cf.strip()
+    peer = _peer(request)
+    if is_cloudflare(peer) or is_private(peer):
+        cf = request.headers.get("cf-connecting-ip", "").strip()
+        if cf:
+            return Client(ip=cf, peer=peer, via_cloudflare=is_cloudflare(peer))
+    return Client(ip=peer, peer=peer, via_cloudflare=False)
 
+
+def client_ip(request: Request) -> str:
+    return identify_client(request).ip
+
+
+def _peer(request: Request) -> str:
+    """Bize baglanan adres: XFF'in son elemani, yoksa soketin karsi ucu."""
     xff = request.headers.get("x-forwarded-for")
     if xff:
         parts = [p.strip() for p in xff.split(",") if p.strip()]

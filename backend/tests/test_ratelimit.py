@@ -2,7 +2,7 @@
 import pytest
 from starlette.requests import Request
 
-from app.ratelimit import RateLimiter, client_ip
+from app.ratelimit import RateLimiter, client_ip, identify_client
 
 
 def _istek(headers: list[tuple[bytes, bytes]] | None = None,
@@ -162,3 +162,57 @@ async def test_chat_route_limit_asiminda_429_ve_retry_after_doner(monkeypatch):
 
     assert kodlar[:20] == [200] * 20
     assert kodlar[20:] == [429] * 5
+
+
+# --- CF-Connecting-IP'ye ne zaman guvenilir --------------------------------
+
+
+def test_sahte_cf_headeri_cloudflare_disindan_gelirse_yok_sayilir():
+    """2026-08-28 acigi: origin, Cloudflare atlanarak dogrudan cevap
+    veriyordu ve CF-Connecting-IP kosulsuz okunuyordu. Dogrudan baglanan biri
+    her istekte baska bir adres uydurup limiti tamamen atlatabiliyordu."""
+    headers = [
+        (b"cf-connecting-ip", b"198.51.100.7"),          # uydurma
+        (b"x-forwarded-for", b"198.51.100.7, 203.0.113.55"),  # peer: Cloudflare degil
+    ]
+    istemci = identify_client(_istek(headers))
+    assert istemci.ip == "203.0.113.55", "sahte header hala okunuyor"
+    assert istemci.via_cloudflare is False
+    assert istemci.direct_origin is True
+
+
+def test_donen_sahte_headerler_tek_kovada_kalir():
+    """Asil zarar buydu: header dondurulerek limit sonsuza kadar tazeleniyordu."""
+    limiter = RateLimiter(per_min=2, per_day=100)
+    sonuclar = []
+    for i in range(4):
+        sahte = f"198.51.100.{i}".encode()
+        ip = client_ip(_istek([(b"cf-connecting-ip", sahte),
+                               (b"x-forwarded-for", sahte + b", 203.0.113.55")]))
+        sonuclar.append(limiter.check(ip, f"s{i}", now=1000.0 + i).allowed)
+
+    assert sonuclar == [True, True, False, False], "header dondurmek limiti atlatiyor"
+
+
+def test_ozel_peer_headere_guvenmeye_devam_eder():
+    """Onumuze ikinci bir dahili proxy girerse peer ozel gorunur. O durumda
+    header'i atmak butun ziyaretcileri tek kovaya toplar — limit herkesi keserdi.
+    Guvenlik kaybi yok: peer'i ozel gostermek istemcinin elinde degil."""
+    istemci = identify_client(_istek([(b"cf-connecting-ip", b"198.51.100.7"),
+                                      (b"x-forwarded-for", b"198.51.100.7, 172.18.0.9")]))
+    assert istemci.ip == "198.51.100.7"
+    assert istemci.direct_origin is False, "lokal/ic ag uyari uretmemeli"
+
+
+def test_gercek_cloudflare_trafiginde_davranis_degismedi():
+    istemci = identify_client(_istek([(b"cf-connecting-ip", b"198.51.100.7"),
+                                      (b"x-forwarded-for", b"198.51.100.7, 172.71.150.33")]))
+    assert (istemci.ip, istemci.via_cloudflare, istemci.direct_origin) == \
+        ("198.51.100.7", True, False)
+
+
+def test_headersiz_dogrudan_baglanti_isaretlenir():
+    """Cloudflare'i atlayan istek header gondermese bile gorunur olmali."""
+    istemci = identify_client(_istek([(b"x-forwarded-for", b"203.0.113.55")]))
+    assert istemci.ip == "203.0.113.55"
+    assert istemci.direct_origin is True
