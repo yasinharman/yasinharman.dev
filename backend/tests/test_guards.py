@@ -83,3 +83,14 @@ def test_leak_signals_prompt_ile_senkron():
     tum_prompt = _system_prompt("tr") + _system_prompt("en")
     olu = [s for s in _PROMPT_SIGNALS if s not in tum_prompt]
     assert not olu, f"prompt'ta artık geçmeyen sinyaller: {olu}"
+
+
+def test_bilinmeyen_dil_turkceye_duser():
+    """Sözlüklerin kendi "tr" girdisi varsayılan; ayrı bir skaler sabit tutmak
+    aynı metni iki yerde taşımak demekti (2026-08-28 temizliği)."""
+    from app.guards import blocked_user_message, output_guard
+
+    assert blocked_user_message("de") == blocked_user_message("tr")
+    assert output_guard("", "de")[0] == output_guard("", "tr")[0]
+    sizinti = output_guard("Agent stopped due to iteration limit.", "de")
+    assert sizinti == output_guard("Agent stopped due to iteration limit.", "tr")

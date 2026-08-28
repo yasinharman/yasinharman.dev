@@ -37,3 +37,20 @@ def test_model_degisince_de_degisir(monkeypatch):
     monkeypatch.setattr(s, "OPENAI_CHAT_MODEL", s.OPENAI_CHAT_MODEL + "-x")
     assert _taze() != once
     prompt_version.cache_clear()
+
+
+def test_tur_baglami_degisince_de_degisir(monkeypatch):
+    """2026-08-28'de _GENISLETME_NOTU eklendi ve kopya cevap oranı %28'den %0'a
+    düştü — davranış ölçülebilir şekilde değişti ama sürüm aynı kalmıştı. Parmak
+    izi böyle bir deploy'u kaçırırsa var olma sebebini kaybediyor."""
+    once = _taze()
+    monkeypatch.setattr(version_modulu, "_GENISLETME_NOTU",
+                        version_modulu._GENISLETME_NOTU + " ")
+    assert _taze() != once
+
+
+def test_baglam_onsozu_degisince_de_degisir(monkeypatch):
+    once = _taze()
+    monkeypatch.setattr(version_modulu, "_BAGLAM_ONSOZU",
+                        version_modulu._BAGLAM_ONSOZU + " ")
+    assert _taze() != once

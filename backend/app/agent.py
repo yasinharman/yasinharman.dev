@@ -267,6 +267,14 @@ async def _kb_search(query: str) -> str:
 # _expand_overviews genisletme yaptiysa chunk'larda expanded_from var. Prompt'a
 # genel bir kural yazmak bu oturumda uc kez denendi ve uc kez cevabi kotulestirdi;
 # kosul kodda bilindiginde kurali da kod soyluyor.
+# Baglamin onsozu: modelin gordugu metnin bir parcasi, o yuzden adi var ve
+# prompt_version'a giriyor (bkz. app/version.py).
+_BAGLAM_ONSOZU = (
+    "Asagidaki bolumler kullanicinin sorusu icin bilgi tabanindan ZATEN getirildi. "
+    "Cevabini bunlara dayandir. Yetersizse portfolio_kb'yi farkli bir ifadeyle "
+    "yeniden cagirabilirsin.\n\n"
+)
+
 _GENISLETME_NOTU = (
     "\n\nNOT: Yukaridaki bolumlerin bir kismi, eslesen bir OZET bolumunun devami "
     "olarak getirildi. Ozet listesini oldugu gibi tekrarlamak EKSIK cevaptir: "
@@ -300,11 +308,7 @@ async def initial_context(kb_query: str) -> list[SystemMessage]:
     govde = _format_docs(docs)
     if any(d.metadata.get("expanded_from") for d in docs):
         govde += _GENISLETME_NOTU
-    mesajlar.append(SystemMessage(content=(
-        "Asagidaki bolumler kullanicinin sorusu icin bilgi tabanindan ZATEN getirildi. "
-        "Cevabini bunlara dayandir. Yetersizse portfolio_kb'yi farkli bir ifadeyle "
-        "yeniden cagirabilirsin.\n\n" + govde
-    )))
+    mesajlar.append(SystemMessage(content=_BAGLAM_ONSOZU + govde))
     return mesajlar
 
 
