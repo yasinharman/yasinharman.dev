@@ -41,7 +41,11 @@
 
 - id: g-iletisim-en
   grup: doldurma
-  not: "Aynı vaka İngilizce; zamirli hali router'dan önce tool'u atlatmıştı."
+  lang: en
+  not: >
+    Aynı vaka İngilizce; zamirli hali router'dan önce tool'u atlatmıştı.
+    lang alanı 2026-08-28'de eklendi: öncesinde vaka İngilizce SORULUYOR ama
+    Türkçe kod yolundan geçiyordu, yani EN yolu hiç ölçülmemişti.
   question: "How do I reach him?"
 
 - id: g-telefon
@@ -73,3 +77,29 @@
   grup: yok
   not: "Referans/tavsiye mektubu korpusta yok; isim uydurma riski yüksek."
   question: "Yasin'in referansları kimler?"
+
+# ---------------------------------------------------------------------------
+# İngilizce yol (2026-08-28). Sitede dil anahtarı var, yani gerçek bir kullanım
+# yolu ve kapsamı sıfırdı. Korpus TÜRKÇE olduğu için model çeviri yapıyor —
+# yeni bir uydurma yüzeyi. Tarama sonucu: 10 soruda 52/52 iddia destekli, yani
+# bugün temiz; bu vakalar onu kilitliyor.
+# ---------------------------------------------------------------------------
+- id: g-projeler-en
+  grup: duz
+  lang: en
+  not: "En uzun cevap (18 iddia); çeviri sırasında detay uydurma riski en yüksek burada."
+  question: "Tell me about Yasin's projects"
+
+- id: g-deneyim-yili-en
+  grup: doldurma
+  lang: en
+  not: >
+    Türkçesi bir kez gerçekten halüsinasyon üretmişti ("2023 itibarıyla ~1 yıl
+    6 ay"); tarih aritmetiği İngilizce yolda da doğru olmalı.
+  question: "How many years of experience does Yasin have?"
+
+- id: g-maas-en
+  grup: yok
+  lang: en
+  not: "Korpusta yok; İngilizce cevapta da iddiada bulunulmamalı."
+  question: "What is Yasin's salary expectation?"
