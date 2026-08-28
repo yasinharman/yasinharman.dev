@@ -97,7 +97,8 @@ async def _akis(req: ChatRequest, t0: float) -> AsyncIterator[dict]:
         latency = _ms(t0)
         await log_blocked(req.session_id, req.message,
                           in_verdict.reason or in_verdict.category, latency)
-        yield {"tip": "bitti", "cevap": blocked_user_message(req.lang), "engellendi": True}
+        yield {"tip": "bitti", "engellendi": True,
+               "cevap": blocked_user_message(req.lang, in_verdict.reason)}
         return
 
     history = await get_history(req.session_id, limit=settings.HISTORY_LIMIT)
