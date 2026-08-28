@@ -114,6 +114,10 @@ export function ChatInterface({ messages, isTyping, stage, onSendMessage }) {
               className="min-w-0 flex-1 bg-transparent border-none outline-none py-4 pl-5 pr-14 text-zinc-100 placeholder:text-zinc-500 text-ellipsis"
               disabled={isTyping}
               autoComplete="off"
+              // Semadaki tavanla ayni (ChatRequest.message max_length=4000).
+              // Bunun ustu backend'de 422 olur ve genel hata mesajina duser;
+              // yapistirilan metni burada kesmek daha durust bir sinir.
+              maxLength={4000}
             />
             <button
               type="submit"

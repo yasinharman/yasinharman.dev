@@ -6,6 +6,18 @@ import { useLanguage } from '../i18n/LanguageContext';
 // n8n doneminden kalan WEBHOOK_URL adlandirmasi kaldirildi; backend artik kendi
 // FastAPI servisimiz ve sabit bir sozlesme donuyor.
 const API_URL = import.meta.env.VITE_API_URL;
+
+// 429'un ayri bir hata tipi olmasinin sebebi: genel hata mesaji "lutfen tekrar
+// deneyin" diyor ve rate limit'te bu TAM TERSI tavsiye — hemen tekrar denemek
+// pencereyi uzatiyor. Sunucu Retry-After gonderiyor, onu kullaniciya soyluyoruz.
+class HizSiniri extends Error {
+  constructor(response) {
+    super('HTTP 429');
+    this.name = 'HizSiniri';
+    const bekle = parseInt(response.headers.get('Retry-After') || '', 10);
+    this.saniye = Number.isFinite(bekle) && bekle > 0 ? bekle : 60;
+  }
+}
 // VITE_API_URL zaten .../chat'e isaret ediyor; ayri bir ortam degiskeni eklemek
 // yerine yol uzatiliyor, boylece Coolify tarafinda yapilacak bir sey yok.
 const STREAM_URL = API_URL ? `${API_URL.replace(/\/+$/, '')}/stream` : null;
@@ -82,10 +94,12 @@ export function HomePage() {
         const d = await fetch(API_URL, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: govde,
         });
+        if (d.status === 429) throw new HizSiniri(d);
         if (!d.ok) throw new Error(`HTTP ${d.status}`);
         yaz((await d.json()).response ?? '', true);
         return;
       }
+      if (response.status === 429) throw new HizSiniri(response);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const isle = (parca) => {
@@ -124,7 +138,10 @@ export function HomePage() {
       // Ham error.message ekrana basiliyordu ("Webhook HTTP 500" gibi). Kullaniciya
       // sabit metin, gelistiriciye console: hata detayi arayuzde ise yaramiyor.
       console.error('[chat] request failed:', error);
-      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: t.chat.errorMessage }]);
+      const metin = error instanceof HizSiniri
+        ? t.chat.rateLimitMessage.replace('{n}', error.saniye)
+        : t.chat.errorMessage;
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'ai', content: metin }]);
     } finally {
       setIsTyping(false);
       setStage(null);

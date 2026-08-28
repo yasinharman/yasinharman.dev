@@ -193,7 +193,20 @@ _BLOCKED_USER_MESSAGE = {
 }
 
 
-def blocked_user_message(lang: str = "tr") -> str:
+# Kapsam reddi disindaki red sebepleri kendi metnini alir: "yardimci olamam,
+# Yasin'in projelerini sorabilirsin" cevabi COK UZUN bir mesaja verildiginde
+# kullaniciyi yaniltiyor — sorun konu degil, uzunluk.
+_REDDEDILME_MESAJLARI = {
+    "too_long": {
+        "tr": "Mesajınız çok uzun. Lütfen sorunuzu kısaltıp tekrar gönderin.",
+        "en": "Your message is too long. Please shorten your question and try again.",
+    },
+}
+
+
+def blocked_user_message(lang: str = "tr", reason: str | None = None) -> str:
+    if (ozel := _REDDEDILME_MESAJLARI.get(reason or "")) is not None:
+        return ozel.get(lang, ozel["tr"])
     return _BLOCKED_USER_MESSAGE.get(lang, _BLOCKED_USER_MESSAGE["tr"])
 
 
