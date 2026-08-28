@@ -136,6 +136,22 @@ yazildiysa metadata'da duruyor (`app/ingest.py::sync_source`), `/readyz` bunu
 chunk'in 12'si zaten rerank'e gittigi icin cevaplar makul gorunmeye devam eder,
 yalnizca vektor siralamasi coper (2026-08-27: recall@1 %78.6 -> %14.3).
 
+## Kapsayici soru — ozet kopyalama
+
+`_expand_overviews` bir ozet bolumunu gecirdiginde ayni kaynagin detay
+bolumlerini de context'e koyuyor. Model bunlari bazen yok sayip ozet bolumunu
+OLDUGU GIBI yapistirip duruyordu (olculdu 2026-08-28: %28, cevap her seferinde
+bayt bayt ayni 328 karakter).
+
+Cozum prompt'a genel bir kural degil, `initial_context`'te kosullu bir not:
+chunk'larda `expanded_from` varsa context'in sonuna "ozet listesini tekrarlamak
+eksik cevaptir" satiri ekleniyor. Kosul kodda deterministik olarak biliniyor,
+kurali da kod soyluyor — ayni oturumda prompt'a yazilan uc kural ise cevabi
+kotulestirmisti.
+
+Olcum: `backend/eval/run_kapsayici.py` (nightly). Not kaldirilinca kirmizi
+yaniyor — dogrulandi.
+
 ## Origin erisimi (Cloudflare)
 
 ```
