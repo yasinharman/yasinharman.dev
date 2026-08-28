@@ -41,6 +41,38 @@ cases:
     expect: career
     regression: true
 
+# ---------------------------------------------------------------------------
+# 🔴 CANLI BUG (2026-08-28): bozuk yazılmış teknoloji adı + öznesiz soru.
+#    "Docker biliyor mu" çalışıyor, "Docekr biliyo mu" KAPSAM REDDİ alıyor.
+#    Ölçüldü: 10 vakalık örneklemde 3 red. Prompt'ta yazım hatası kuralı ZATEN
+#    var ama özel ad tanınmayınca geriye konu kalmıyor ("biliyo mu").
+#    Retrieval'a havale etmek de çözüm değil: aynı sorgular aramada da boş
+#    dönüyor (ölçüldü), yani arama hakem olamıyor.
+# ---------------------------------------------------------------------------
+  - id: yazim-docker-bozuk
+    question: Docekr biliyo mu
+    expect: career
+    regression: true
+  - id: yazim-docker-bozuk2
+    question: dokcer biliyormu
+    expect: career
+    regression: true
+  - id: yazim-react-gundelik
+    question: react bilio mu acaba
+    expect: career
+    regression: true
+  - id: yazim-kubernetes-bozuk
+    question: kubernets kullaniyo mu
+    expect: career
+
+# Aynı kalıp, tanınan yazım — bugün çalışıyor, bozulmamalı.
+  - id: yetenek-docker-duz
+    question: Docker biliyor mu
+    expect: career
+  - id: yetenek-python-ozneli
+    question: pyhton biliyo mu bu adam
+    expect: career
+
 # Aynı projeler, "proje"/"Yasin" ipucu VAR — bugün çalışıyor, bozulmamalı.
   - id: proje-bdf-anlat
     question: Business Data Finder projesini anlat
