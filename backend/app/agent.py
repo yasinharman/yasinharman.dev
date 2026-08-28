@@ -256,6 +256,24 @@ async def _kb_search(query: str) -> str:
     return _format_docs(docs)
 
 
+# Genisletme olduğunda context'e eklenen deterministik uyari.
+#
+# Olculdu (2026-08-28, 18 ornek): "Yasin'in projeleri neler?" ve iki varyasyonu
+# %28 oraninda 328 karakterlik, BAYT BAYT AYNI bir cevap donuyordu — modelin
+# yaptigi sey data/projeler.md'deki "## Projelerin Listesi" bolumunu oldugu gibi
+# yapistirip durmakti. Uc detay bolumu context'te duruyordu ve hic kullanilmiyordu.
+#
+# Not prompt'a degil BURAYA konuyor cunku kosul deterministik olarak biliniyor:
+# _expand_overviews genisletme yaptiysa chunk'larda expanded_from var. Prompt'a
+# genel bir kural yazmak bu oturumda uc kez denendi ve uc kez cevabi kotulestirdi;
+# kosul kodda bilindiginde kurali da kod soyluyor.
+_GENISLETME_NOTU = (
+    "\n\nNOT: Yukaridaki bolumlerin bir kismi, eslesen bir OZET bolumunun devami "
+    "olarak getirildi. Ozet listesini oldugu gibi tekrarlamak EKSIK cevaptir: "
+    "listedeki HER madde icin ilgili detay bolumunu de kullanarak yaz."
+)
+
+
 async def initial_context(kb_query: str) -> list[SystemMessage]:
     """Router'in urettigi kb_query ile ILK aramayi KOD tarafinda yapar.
 
@@ -279,10 +297,13 @@ async def initial_context(kb_query: str) -> list[SystemMessage]:
     if not kb_query:
         return mesajlar
     docs = await kb_search(kb_query)
+    govde = _format_docs(docs)
+    if any(d.metadata.get("expanded_from") for d in docs):
+        govde += _GENISLETME_NOTU
     mesajlar.append(SystemMessage(content=(
         "Asagidaki bolumler kullanicinin sorusu icin bilgi tabanindan ZATEN getirildi. "
         "Cevabini bunlara dayandir. Yetersizse portfolio_kb'yi farkli bir ifadeyle "
-        "yeniden cagirabilirsin.\n\n" + _format_docs(docs)
+        "yeniden cagirabilirsin.\n\n" + govde
     )))
     return mesajlar
 
@@ -293,7 +314,6 @@ def _kb_search_sync(query: str) -> str:
     raise NotImplementedError("portfolio_kb is async-only; use AgentExecutor.ainvoke")
 
 
-@lru_cache
 @lru_cache
 def answer_chain(lang: str = "tr"):
     """Tool'suz cevap yolu — ilk retrieval sonuc dondurdugunde kullanilir.

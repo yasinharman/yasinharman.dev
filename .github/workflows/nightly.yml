@@ -74,6 +74,16 @@ jobs:
         working-directory: backend
         run: python -m eval.run_routing
 
+      # Kapsayıcı soruda cevap, özet listesini kopyalamakla yetiniyor mu?
+      # Rastlantısal bir arıza (ölçüldü: %28) ve mevcut evallerin hiçbiri
+      # görmüyordu — retrieval doğru, iddialar destekli, cevap sadece eksikti.
+      # 9 örnek, %28'lik bir regresyonu ~%95 olasılıkla yakalar; her gece
+      # koştuğu için iki geceyi birden kaçırma ihtimali binde 2.
+      - name: Kapsayıcı soru bütünlüğü (3 ifade × 3 örnek)
+        if: always() && steps.kontrol.outputs.hazir == 'true'
+        working-directory: backend
+        run: python -m eval.run_kapsayici
+
       # Cevaptaki her iddia, modele gösterilen chunk'larda var mı? Eşik 1.0 ve
       # bilerek: %90 "cevapların onda biri yalan" demek. Hakem üretenden ayrı ve
       # daha güçlü bir model — kendi cevabını kendine denetletmek ölçüm değildir.
