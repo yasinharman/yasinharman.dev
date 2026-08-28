@@ -151,6 +151,9 @@ cases:
   - id: takip-puanlama
     question: bahsettiğin puanlamayı biraz detaylandır
     expect: career
+    # Kategori yetmez: "bahsettiğin puanlama" çözülmeden cevaplayıcıya giderse
+    # model neyin sorulduğunu bilmiyor. Referans adıyla anılmalı.
+    resolved_contains: [Scoring Engine]
     history:
       - role: user
         content: megagear da yaptığı işi anlat
@@ -163,6 +166,11 @@ cases:
     question: how do I reach him?
     expect: career
     regression: true
+    # Olayın sebebi KATEGORİ DEĞİLDİ: soru career'a doğru düşüyordu, sorun
+    # resolved_query'de "him" kalmasıydı. Bu iki satır olmadan vaka, yazılma
+    # sebebi olan bug'ı yakalayamıyordu (2026-08-28'de fark edildi).
+    resolved_contains: [Yasin]
+    resolved_forbids: [him, his]
     note: >
       Zamirli takip sorusu. Router "How do I reach him?" diye çözünce cevaplayıcı
       soruyu eksik alıyor, tool'u HİÇ çağırmadan UYDURUYORDU: sahte bir e-posta
@@ -176,6 +184,8 @@ cases:
   - id: takip-iletisim-en-kisa
     question: how?
     expect: career
+    resolved_contains: [Yasin]
+    resolved_forbids: [him, his]
     history:
       - role: user
         content: What are Yasin's salary expectations?
@@ -184,6 +194,7 @@ cases:
   - id: takip-iletisim
     question: nasıl geçicem?
     expect: career
+    resolved_contains: [Yasin]
     note: >
       Aynı cümle tek başına unrelated (bkz. alakasiz-nasil), geçmişle career.
       Eski SYSTEM_PROMPT'un bağlam çözümleme kuralının BİREBİR örneğiydi.
@@ -194,6 +205,39 @@ cases:
         content: yasinin maaş beklentisi nedir
       - role: assistant
         content: Bu konuda elimde bilgi yok. Yasin ile iletişime geçebilirsiniz.
+
+# 2026-08-28 taraması: 10 çok turlu vaka koşuldu, hepsi geçti. Üçü buraya
+# alındı — en kırılgan üç kalıp: sıra referansı, kapsam reddi sonrası konu
+# değişimi ve career→personal geçişi.
+  - id: takip-sira-referansi
+    question: ikincisini anlat
+    expect: career
+    resolved_contains: [Internship Tracker]
+    history:
+      - role: user
+        content: Yasin'in projeleri neler?
+      - role: assistant
+        content: "Üç ana projesi var: Jarvis, Internship Tracker, Business Data Finder."
+  - id: takip-red-sonrasi-konu-degisimi
+    question: peki Yasin kim?
+    expect: career
+    note: >
+      Önceki tur bir KAPSAM REDDİ; eski bağlamı zorlamak yeni soruyu da
+      unrelated'a düşürürdü.
+    history:
+      - role: user
+        content: bugün hava nasıl?
+      - role: assistant
+        content: Üzgünüm, sadece Yasin hakkındaki soruları cevaplayabilirim.
+  - id: takip-career-personal-gecisi
+    question: ya boyu?
+    expect: personal
+    note: Yaş career, boy personal — takip sorusu kategoriyi değiştirebilir.
+    history:
+      - role: user
+        content: Yasin kaç yaşında?
+      - role: assistant
+        content: Yasin 23 yaşında.
 
 # ---------------------------------------------------------------------------
 # personal — korpusta yok, aranmadan reddedilir. Bugün doğru çalışıyor.
