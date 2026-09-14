@@ -17,6 +17,10 @@ on:
 
 jobs:
   gercek-api:
+    # Yalnizca elle (Actions -> Nightly -> Run workflow). Her gece kosmasi ayda
+    # 15-30$ API maliyeti demekti; 2026-09-14'te zamanlamadan cikarildi. Asagidaki
+    # iki ucretsiz kontrol her gece kosmaya devam ediyor.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       # MODE=local KRİTİK: prod chat_logs / chat_messages tablolarına tek satır
