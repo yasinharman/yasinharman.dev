@@ -69,7 +69,9 @@ jobs:
       - name: Integration testleri
         if: steps.kontrol.outputs.hazir == 'true'
         working-directory: backend
-        run: pytest -m integration -q -rs
+        # -rfEs: yalnizca -rs yazmak varsayilan "fE" ozetini EZIYOR, yani dusen
+        # testin adi loga hic cikmiyordu; hata CI'a ozgu oldugu icin tek iz o.
+        run: pytest -m integration -q -rfEs
 
       # 42 vaka, hepsi ya canlı chat_logs trafiğinden ya canlı probe'dan geldi.
       # Eşik yok, tam puan bekleniyor: her vaka bir kez gerçekten kırıktı.
