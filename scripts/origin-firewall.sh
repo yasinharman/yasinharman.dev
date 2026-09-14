@@ -26,7 +26,13 @@ set -euo pipefail
 
 ZINCIR="CLOUDFLARE-ONLY"
 PORTLAR="80,443"
-IC_AGLAR_V4="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8"
+# 100.64.0.0/10 = Tailscale (CGNAT). Cloudflare'in arkasinda olmayan yonetim
+# arayuzlerine yalnizca tailnet uzerinden erisiliyor; bu aralik olmadan o trafik
+# de asagidaki DROP'a takilir. Tailnet disariya acik degil, cihazlar kimlik
+# dogrulanmis.
+# IPv6 tarafinda Tailscale'in fd7a:115c:a1e0::/48 araligi fc00::/7 icinde kaldigi
+# icin ayrica eklemeye gerek yok.
+IC_AGLAR_V4="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8 100.64.0.0/10"
 IC_AGLAR_V6="fc00::/7 fe80::/10 ::1/128"
 MOD="${1:---dry-run}"
 
