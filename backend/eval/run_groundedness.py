@@ -94,7 +94,17 @@ async def _cevapla(soru: str, lang: str = "tr") -> tuple[str, list]:
 # sözcük arama) denendi ve YANLIŞ POZİTİF üretti: İngilizce cevap, korpustaki
 # Türkçe proje adını olduğu gibi aktarıyor ("... ETL ve Dashboard Sistemi") ve
 # bu doğru davranış.
-_EN_ISLEV = ("the", "and", "is", "of", "to", "in", "with", "his", "for")
+#
+# Liste neden bu kadar: ilk surum yalnizca anlatim cumlelerinde gecen sozcukleri
+# iceriyordu, bu yuzden dogru Ingilizce ret cevabi ("I don't have information on
+# that. You can get in touch with Yasin.") esigi gecemedi ve eval 2026-08-28'den
+# beri her gece kirmizi yandi. Eklenenler kisa ret/yonlendirme cumlelerinden.
+# BILEREK disarida: Turkcede de sozcuk olanlar (on, can, not, at, it) ve tek
+# harfliler — [a-z] ile bolmek "ş", "ı" gibi harflerde Turkce sozcugu "a", "i"
+# parcalarina ayiriyor.
+_EN_ISLEV = ("the", "and", "is", "of", "to", "in", "with", "his", "for",
+             "you", "your", "that", "this", "have", "don't", "about", "are",
+             "was", "will")
 
 
 def _dil_uyumlu(cevap: str, lang: str) -> bool:

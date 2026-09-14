@@ -41,3 +41,21 @@ def test_cok_kisa_ingilizce_cevap_esigi_gecemez():
     (örn. 'Bu is ile ilgili') eşiği geçmemeli."""
     assert not _dil_uyumlu("Docker.", "en")
     assert not _dil_uyumlu("Yasin Harman is.", "en")
+
+
+def test_kisa_ingilizce_ret_cevabi_gecer():
+    """Regresyon: g-maas-en'in gercek cevabi. Ilk kelime listesiyle yalnizca
+    'in' ve 'with' eslesiyordu; dogru cevap YANLIS DIL sayilip nightly her gece
+    kirmizi yaniyordu."""
+    assert _dil_uyumlu(
+        "I don't have information on that. You can get in touch with Yasin.", "en")
+
+
+@pytest.mark.parametrize("cevap", [
+    "Bu konuda bilgim yok. Yasin ile iletişime geçebilirsin.",
+    # Turkce karakter kullanilmadan yazilmis, Ingilizceyle cakisan sozcuklerle
+    # dolu: on (10), can, not, at, it. Hicbiri esige sayilmamali.
+    "Yasin on yil once bir not aldi, can sikici bir at ve it hikayesi.",
+])
+def test_turkce_ret_cevabi_ingilizce_bekleniyorken_yakalanir(cevap):
+    assert not _dil_uyumlu(cevap, "en")
